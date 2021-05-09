@@ -690,37 +690,36 @@ func (this *SubtitleFile) PrintAllLineSetsWithSplitData() {
 }
 
 // Print the SRT file, with the original lines
-func (this *SubtitleFile) PrintOriginalSRT() {
+func (this *SubtitleFile) PrintOriginalSRT(f io.Writer) {
 
 	// Keep count of the lines
 	n := 0
 
 	for _, sbt := range this.subtitle {
-		sbt.Print()
+		sbt.Print(f)
 		for i := 0; i < sbt.Nlines; i++ {
-			fmt.Println(this.originalLine[n])
+			fmt.Fprintln(f, this.originalLine[n])
 			n++
 		}
-		fmt.Println()
-		fmt.Println()
+		fmt.Fprintln(f)
+		fmt.Fprintln(f)
 
 	}
 }
 
 // Print the SRT file, with the translated lines
-func (this *SubtitleFile) PrintTranslatedSRT() {
+func (this *SubtitleFile) PrintTranslatedSRT(f io.Writer) {
 
 	// Keep count of the lines
 	n := 0
 
 	for _, sbt := range this.subtitle {
-		sbt.Print()
+		sbt.Print(f)
 		for i := 0; i < sbt.Nlines; i++ {
-			fmt.Println(this.translatedLine[n])
+			fmt.Fprintln(f, this.translatedLine[n])
 			n++
 		}
-		fmt.Println()
-		fmt.Println()
-
+		fmt.Fprintln(f)
+		fmt.Fprintln(f)
 	}
 }

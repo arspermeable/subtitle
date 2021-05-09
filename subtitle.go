@@ -20,7 +20,7 @@ func (this *Subtitle) PrintShort(f io.Writer) {
 	fmt.Fprintf(f, "%s|%s|%2.2d lines|\n", this.Order, this.Timemark, this.Nlines)
 }
 
-func (this *Subtitle) Print() {
-	fmt.Println(this.Order)
-	fmt.Println(this.Timemark)
+func (this *Subtitle) Print(f io.Writer) {
+	fmt.Fprintln(f, this.Order)
+	fmt.Fprintln(f, this.Timemark)
 }
