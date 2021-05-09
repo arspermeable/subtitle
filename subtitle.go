@@ -11,16 +11,16 @@ import (
 //   * Number of lines (1..n).
 // Note: If a subtitle includes no lines, then nLines=1 and "" is added
 type Subtitle struct {
-	order    string
-	timemark string
-	nLines   int
+	Order    string
+	Timemark string
+	Nlines   int
 }
 
 func (this *Subtitle) PrintShort(f io.Writer) {
-	fmt.Fprintf(f, "%s|%s|%2.2d lines|\n", this.order, this.timemark, this.nLines)
+	fmt.Fprintf(f, "%s|%s|%2.2d lines|\n", this.Order, this.Timemark, this.Nlines)
 }
 
 func (this *Subtitle) Print() {
-	fmt.Println(this.order)
-	fmt.Println(this.timemark)
+	fmt.Println(this.Order)
+	fmt.Println(this.Timemark)
 }

@@ -17,6 +17,7 @@ const sep = " ,::!\\.\\?\\)\\]-"
 //   * an array of lines in the original language
 //   * an array of lines in the translated language
 //   * an array of line sets definition
+//   * an array of the translated text of the LineSet:s
 //
 // SubtitleFile is based in the SRT definition, each subtitle block consists of
 //   <order>     === (\d{1,n})
@@ -28,7 +29,15 @@ type SubtitleFile struct {
 	originalLine   []string
 	translatedLine []string
 	lineSet        []LineSet
+	translatedSet  []string
 	translatedText string
+}
+
+// A LineSet is a set of lines within the list of subtitle text lines
+// Each LineSet is process as a block to match original and translation linebreaks
+type LineSet struct {
+	InitLine int
+	LastLine int
 }
 
 // Add a subtitle block to the subtitle file
@@ -88,7 +97,8 @@ func (this *SubtitleFile) SplitTranslatedTextIntoLineSets() {
 	// Translated text to be splitted
 	data := this.translatedText
 	// Create the first newLineSet
-	newLineSet := LineSet{0, 0, ""}
+	newLineSet := LineSet{0, 0}
+	newTranslatedSet := ""
 	// String for the searchRegexp
 	searchRegexp := ""
 	// Boolean to check if it isMiniLine
@@ -127,12 +137,14 @@ func (this *SubtitleFile) SplitTranslatedTextIntoLineSets() {
 			if isExact {
 				// If current line set isExact, append the new line set
 				this.lineSet = append(this.lineSet, newLineSet)
+				this.translatedSet = append(this.translatedSet, newTranslatedSet)
 				// and open a new lineset that !isExact
-				newLineSet = LineSet{i, i, ""}
+				newLineSet = LineSet{i, i}
+				newTranslatedSet = ""
 				isExact = false
 			} else {
 				// If newLineSet set !isExact, add this line to the newLineSet
-				newLineSet.lastLine = i
+				newLineSet.LastLine = i
 			}
 		} else {
 			// The line was found
@@ -140,8 +152,8 @@ func (this *SubtitleFile) SplitTranslatedTextIntoLineSets() {
 				// The searchRegexp is at the beginning of the data
 				// newLineSet only can be isExact, or it is the initial one
 				// Add the line to the newLineSet and the text to the translated line
-				newLineSet.lastLine = i
-				newLineSet.translatedText = ConcatWithSpace(newLineSet.translatedText, data[loc[0]:loc[1]])
+				newLineSet.LastLine = i
+				newTranslatedSet = ConcatWithSpace(newTranslatedSet, data[loc[0]:loc[1]])
 				// This line set continues isExact (just in case we are in the initial line)
 				isExact = true
 				// Retire the found string
@@ -152,10 +164,12 @@ func (this *SubtitleFile) SplitTranslatedTextIntoLineSets() {
 				// And it cannot be !isMiniLine and isExact for the same reason
 				// So, a new isExact line set is found while treating a !isExact newLineSet
 				// Add the text and close previous line set
-				newLineSet.translatedText = data[:loc[0]-1]
+				newTranslatedSet = data[:loc[0]-1]
 				this.lineSet = append(this.lineSet, newLineSet)
+				this.translatedSet = append(this.translatedSet, newTranslatedSet)
 				// Open a newLineSet that isExact
-				newLineSet = LineSet{i, i, ConcatWithSpace("", data[loc[0]:loc[1]])}
+				newLineSet = LineSet{i, i}
+				newTranslatedSet = ConcatWithSpace("", data[loc[0]:loc[1]])
 				isExact = true
 				data = data[loc[1]+1:]
 			}
@@ -164,8 +178,9 @@ func (this *SubtitleFile) SplitTranslatedTextIntoLineSets() {
 
 	// If there is something left in data, it is the last block
 	if data != "" {
-		newLineSet.translatedText = strings.TrimSpace(data)
+		newTranslatedSet = strings.TrimSpace(data)
 		this.lineSet = append(this.lineSet, newLineSet)
+		this.translatedSet = append(this.translatedSet, newTranslatedSet)
 	}
 }
 
@@ -187,11 +202,11 @@ func (this *SubtitleFile) SplitTranslatedLineSetIntoLines(theLineSet int) {
 	ratio := this.CalculateRatioOfLineSet(theLineSet)
 
 	// Initialize the values
-	data := this.lineSet[theLineSet].translatedText
+	data := this.translatedSet[theLineSet]
 	excess := 0.0
 
 	// Iterate over the lines of the lineSet theLineSet
-	for i := this.lineSet[theLineSet].initLine; i <= this.lineSet[theLineSet].lastLine; i++ {
+	for i := this.lineSet[theLineSet].InitLine; i <= this.lineSet[theLineSet].LastLine; i++ {
 		// Set target size for the translated line
 		// Note that target is float64!
 
@@ -202,7 +217,7 @@ func (this *SubtitleFile) SplitTranslatedLineSetIntoLines(theLineSet int) {
 		if this.CountOriginalCharsInLine(i) == 0 {
 			// If the original line is empty, output empty data and keep excess
 			newLine = ""
-		} else if i == this.lineSet[theLineSet].lastLine {
+		} else if i == this.lineSet[theLineSet].LastLine {
 			// If this is the last line, output the rest of the data
 			newLine = data
 			excess = float64(len([]rune(newLine))) - target + 1.0
@@ -256,21 +271,21 @@ func (this *SubtitleFile) MoveLinesUpFromLineSet(lsFrom, n int) {
 		return
 	}
 	// cap n to the number of lines
-	if n > (this.lineSet[lsFrom].lastLine - this.lineSet[lsFrom].initLine + 1) {
-		n = this.lineSet[lsFrom].lastLine - this.lineSet[lsFrom].initLine + 1
+	if n > (this.lineSet[lsFrom].LastLine - this.lineSet[lsFrom].InitLine + 1) {
+		n = this.lineSet[lsFrom].LastLine - this.lineSet[lsFrom].InitLine + 1
 	}
 	// Prepare local variables
 	lsTo := lsFrom - 1
-	initLine := this.lineSet[lsFrom].initLine
-	endLine := this.lineSet[lsFrom].initLine + n
+	initLine := this.lineSet[lsFrom].InitLine
+	endLine := this.lineSet[lsFrom].InitLine + n
 
 	// Take last n lines of translastedLine
 	toBeRemoved := JoinAllStrings(this.translatedLine[initLine:endLine])
 
 	// remove the text from the top of lineSet[lsFrom].translatedText
-	this.lineSet[lsFrom].translatedText = strings.TrimSpace(strings.TrimPrefix(this.lineSet[lsFrom].translatedText, toBeRemoved))
+	this.translatedSet[lsFrom] = strings.TrimSpace(strings.TrimPrefix(this.translatedSet[lsFrom], toBeRemoved))
 	// add the text to the bottom of lineSet[lsFrom-1].translatedText
-	this.lineSet[lsTo].translatedText = (this.lineSet[lsTo].translatedText + " " + toBeRemoved)
+	this.translatedSet[lsTo] = (this.translatedSet[lsTo] + " " + toBeRemoved)
 
 	// Split the translation of the two affected lineSet into lines
 	this.SplitTranslatedLineSetIntoLines(lsFrom)
@@ -290,14 +305,14 @@ func (this *SubtitleFile) MoveWordsUpFromLineSet(lsFrom, n int) {
 	// Prepare local variables
 	lsTo := lsFrom - 1
 	rs := fmt.Sprintf(`^(\S+\s+){%d}`, n)
-	loc := regexp.MustCompile((rs)).FindStringIndex(this.lineSet[lsFrom].translatedText)
+	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedSet[lsFrom])
 	if loc == nil {
 		return
 	}
 
 	// Remove the first n words from lsFrom and add it to lsTo
-	this.lineSet[lsTo].translatedText = this.lineSet[lsTo].translatedText + " " + this.lineSet[lsFrom].translatedText[loc[0]:loc[1]]
-	this.lineSet[lsFrom].translatedText = this.lineSet[lsFrom].translatedText[loc[1]:]
+	this.translatedSet[lsTo] = this.translatedSet[lsTo] + " " + this.translatedSet[lsFrom][loc[0]:loc[1]]
+	this.translatedSet[lsFrom] = this.translatedSet[lsFrom][loc[1]:]
 
 	// Split the translation of the two affected lineSet into lines
 	this.SplitTranslatedLineSetIntoLines(lsFrom)
@@ -315,21 +330,21 @@ func (this *SubtitleFile) MoveLinesDownFromLineSet(lsFrom, n int) {
 		return
 	}
 	// cap n to the number of lines
-	if n > (this.lineSet[lsFrom].lastLine - this.lineSet[lsFrom].initLine + 1) {
-		n = this.lineSet[lsFrom].lastLine - this.lineSet[lsFrom].initLine + 1
+	if n > (this.lineSet[lsFrom].LastLine - this.lineSet[lsFrom].InitLine + 1) {
+		n = this.lineSet[lsFrom].LastLine - this.lineSet[lsFrom].InitLine + 1
 	}
 	// Prepare local variables
 	lsTo := lsFrom + 1
-	endLine := this.lineSet[lsFrom].lastLine + 1
-	initLine := this.lineSet[lsFrom].lastLine - n + 1
+	endLine := this.lineSet[lsFrom].LastLine + 1
+	initLine := this.lineSet[lsFrom].LastLine - n + 1
 
 	// Take last n lines of translastedLine
 	toBeRemoved := JoinAllStrings(this.translatedLine[initLine:endLine])
 
 	// remove the text from the bottom of lineSet[lsFrom].translatedText
-	this.lineSet[lsFrom].translatedText = strings.TrimSpace(strings.TrimSuffix(this.lineSet[lsFrom].translatedText, toBeRemoved))
+	this.translatedSet[lsFrom] = strings.TrimSpace(strings.TrimSuffix(this.translatedSet[lsFrom], toBeRemoved))
 	// add the text to the top of lineSet[lsFrom-1].translatedText
-	this.lineSet[lsTo].translatedText = (toBeRemoved + " " + this.lineSet[lsTo].translatedText)
+	this.translatedSet[lsTo] = (toBeRemoved + " " + this.translatedSet[lsTo])
 
 	// Split the translation of the two affected lineSet into lines
 	this.SplitTranslatedLineSetIntoLines(lsFrom)
@@ -349,14 +364,14 @@ func (this *SubtitleFile) MoveWordsDownFromLineSet(lsFrom, n int) {
 	// Prepare local variables
 	lsTo := lsFrom + 1
 	rs := fmt.Sprintf(`(\s+\S+){%d}$`, n)
-	loc := regexp.MustCompile((rs)).FindStringIndex(this.lineSet[lsFrom].translatedText)
+	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedSet[lsFrom])
 	if loc == nil {
 		return
 	}
 
 	// Remove the last n words from lsFrom and add it to beginning of lsTo
-	this.lineSet[lsTo].translatedText = strings.TrimSpace(this.lineSet[lsFrom].translatedText[loc[0]:loc[1]] + " " + this.lineSet[lsTo].translatedText)
-	this.lineSet[lsFrom].translatedText = this.lineSet[lsFrom].translatedText[:loc[0]]
+	this.translatedSet[lsTo] = strings.TrimSpace(this.translatedSet[lsFrom][loc[0]:loc[1]] + " " + this.translatedSet[lsTo])
+	this.translatedSet[lsFrom] = this.translatedSet[lsFrom][:loc[0]]
 
 	// Split the translation of the two affected lineSet into lines
 	this.SplitTranslatedLineSetIntoLines(lsFrom)
@@ -368,30 +383,32 @@ func (this *SubtitleFile) MoveWordsDownFromLine(lsFrom, n int) {
 
 // Split lineSet ls in two (ls and ls+1) at the originalLine ol
 // lineSet[ls] = initLine..ol-1
-// lineset[ls+1] = ok..lastLine
+// lineset[ls+1] = ok..LastLine
 func (this *SubtitleFile) SplitLineSetByLine(ls, breakLine int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if ls < 0 || ls >= len(this.lineSet) {
 		return
 	}
 	// Verify that the lineSet has more than one line, and ol is in it
-	numLines := this.lineSet[ls].lastLine - this.lineSet[ls].initLine + 1
-	initLine := this.lineSet[ls].initLine
-	lastLine := this.lineSet[ls].lastLine
+	numLines := this.lineSet[ls].LastLine - this.lineSet[ls].InitLine + 1
+	initLine := this.lineSet[ls].InitLine
+	lastLine := this.lineSet[ls].LastLine
 	if numLines <= 1 || breakLine <= initLine || breakLine > lastLine {
 		return
 	}
-	// add a new lineSet
-	this.lineSet = append(this.lineSet, LineSet{0, 0, ""})
-	// Move linesets +1
+	// add a new lineSet and translatedSet
+	this.lineSet = append(this.lineSet, LineSet{0, 0})
+	this.translatedSet = append(this.translatedSet, "")
+	// Move lineSets and translatedSet +1
 	copy(this.lineSet[ls+1:], this.lineSet[ls:])
-	// adapt the lineSets
-	this.lineSet[ls+1].initLine = breakLine
-	this.lineSet[ls+1].lastLine = lastLine
-	this.lineSet[ls].lastLine = breakLine - 1
-	// Assign the translatedText
-	this.lineSet[ls].translatedText = JoinAllStrings(this.translatedLine[initLine:breakLine])
-	this.lineSet[ls+1].translatedText = JoinAllStrings(this.translatedLine[breakLine : lastLine+1])
+	copy(this.translatedSet[ls+1:], this.translatedSet[ls:])
+	// adapt the lineSets and translatedSet
+	this.lineSet[ls+1].InitLine = breakLine
+	this.lineSet[ls+1].LastLine = lastLine
+	this.lineSet[ls].LastLine = breakLine - 1
+	// Assign the translatedSet
+	this.translatedSet[ls] = JoinAllStrings(this.translatedLine[initLine:breakLine])
+	this.translatedSet[ls+1] = JoinAllStrings(this.translatedLine[breakLine : lastLine+1])
 	// Split again the affected lineSets
 	this.SplitTranslatedLineSetIntoLines(ls)
 	this.SplitTranslatedLineSetIntoLines(ls + 1)
@@ -405,13 +422,35 @@ func (this *SubtitleFile) MergeLineSetWithNext(ls int) {
 // Informative functions about the SubtitleFile
 // --------------------------------------------
 
-// Count original words in a given line
+// CountLineSets returns the total number of LineSet:s in SubtitleFile
+func (this *SubtitleFile) CountLineSets() int {
+	return len(this.lineSet)
+}
+
+// CountLines returns the total number of lines in SubtitleFile
+func (this *SubtitleFile) CountLines() int {
+	return len(this.originalLine)
+}
+
+// CountOriginalWords returns the total number of original words in SubtitleFile
+func (this *SubtitleFile) CountOriginalWords() int {
+	originalText, _ := this.GetOriginalTextFromLines()
+	return len(strings.Fields(originalText))
+}
+
+// CountOriginalWordsInLine returns the total number of original words in a given line
 func (this *SubtitleFile) CountOriginalWordsInLine(theLine int) int {
 	if theLine >= len(this.originalLine) || theLine < 0 {
 		return -1
 	}
 
 	return len(strings.Fields(this.originalLine[theLine]))
+}
+
+// CountOriginalChars returns the original chars in SubtitleFile
+func (this *SubtitleFile) CountOriginalChars() int {
+	originalText, _ := this.GetOriginalTextFromLines()
+	return len([]rune(originalText)) - len(this.originalLine) + 1
 }
 
 // Count original chars in a given line
@@ -429,7 +468,7 @@ func (this *SubtitleFile) CountLinesInLineSet(theLineSet int) int {
 		return -1
 	}
 
-	return this.lineSet[theLineSet].lastLine - this.lineSet[theLineSet].initLine + 1
+	return this.lineSet[theLineSet].LastLine - this.lineSet[theLineSet].InitLine + 1
 }
 
 // Count original words in a given line set
@@ -448,10 +487,15 @@ func (this *SubtitleFile) CountOriginalCharsInLineSet(theLineSet int) int {
 		return -1
 	}
 	var origChars int
-	for i := this.lineSet[theLineSet].initLine; i <= this.lineSet[theLineSet].lastLine; i++ {
+	for i := this.lineSet[theLineSet].InitLine; i <= this.lineSet[theLineSet].LastLine; i++ {
 		origChars += this.CountOriginalCharsInLine(i)
 	}
 	return origChars
+}
+
+// CountTranslatedWords returns the number of translated words in a SubtitleFile
+func (this *SubtitleFile) CountTranslatedWords() int {
+	return len(strings.Fields(this.translatedText))
 }
 
 // Count translated words in a given line set
@@ -460,7 +504,13 @@ func (this *SubtitleFile) CountTranslatedWordsInLineSet(theLineSet int) int {
 		return -1
 	}
 
-	return len(strings.Fields(this.lineSet[theLineSet].translatedText))
+	return len(strings.Fields(this.translatedSet[theLineSet]))
+}
+
+// CountTranslatedChars returns translated chars (runes) in a SubtitleFile
+func (this *SubtitleFile) CountTranslatedChars() int {
+	// Translated Chars is number of chars - CRLF (number of lines + 1)
+	return len([]rune(this.translatedText)) - len(this.originalLine) + 1
 }
 
 // Count translated chars (runes) in a given line set
@@ -470,7 +520,7 @@ func (this *SubtitleFile) CountTranslatedCharsInLineSet(theLineSet int) int {
 	}
 
 	// NUmber of Chars is total runes - CRLFs (****) more precise: CRLFs - empty lines
-	return len([]rune(this.lineSet[theLineSet].translatedText)) - (this.lineSet[theLineSet].lastLine - this.lineSet[theLineSet].initLine)
+	return len([]rune(this.translatedSet[theLineSet])) - (this.lineSet[theLineSet].LastLine - this.lineSet[theLineSet].InitLine)
 }
 
 // ----------------------------------------
@@ -491,53 +541,70 @@ func (this *SubtitleFile) GetTranslatedText() (string, int) {
 	return theText, len([]rune(theText))
 }
 
-// Get the translated text using translated lines, returns text and length (runes)
-//
+// Get the translated text using translated lines
+// Returns text and length (runes)
 func (this *SubtitleFile) GetTranslatedTextFromLines() (string, int) {
 	theText := PrepareString(JoinAllStrings(this.translatedLine))
 	return theText, len([]rune(theText))
 }
 
-// Get the translated text using line sets, returns text and length (runes)
-//
+// Get the translated text using line sets
+// Returns text and length (runes)
 func (this *SubtitleFile) GetTranslatedTextFromLineSet() (string, int) {
-	theText := PrepareString(JoinAllStringsFromLineSet(this.lineSet))
+	theText := PrepareString(JoinAllStrings(this.translatedSet))
 	return theText, len([]rune(theText))
 }
 
-// Get the original text of a given line set, returns text and length (runes)
-//
+// Get the original text of a given line set
+// Returns text and length (runes)
 func (this *SubtitleFile) GetOriginalTextOfLineSet(ls int) (string, int) {
 	if ls >= len(this.lineSet) || ls < 0 {
 		return "", -1
 	}
-	theText := PrepareString(JoinAllStrings(this.originalLine[this.lineSet[ls].initLine : this.lineSet[ls].lastLine+1]))
+	theText := PrepareString(JoinAllStrings(this.originalLine[this.lineSet[ls].InitLine : this.lineSet[ls].LastLine+1]))
 	return theText, len([]rune(theText))
 }
 
-// Get the translated text of a given line set, returns text and length (runes)
-//
+// Get the translated text of a given line set
+// Returns text and length (runes)
 func (this *SubtitleFile) GetTranslatedTextOfLineSet(ls int) (string, int) {
 	if ls >= len(this.lineSet) || ls < 0 {
 		return "", -1
 	}
-	theText := this.lineSet[ls].translatedText
+	theText := this.translatedSet[ls]
 	return theText, len([]rune(theText))
 }
 
-// Get the translated text of a given line set using translated lines, returns text and length (runes)
-//
+// Get the translated text of a given line set using translated lines
+// Returns text and length (runes)
 func (this *SubtitleFile) GetTranslatedTextOfLineSetFromLines(ls int) (string, int) {
 	if ls >= len(this.lineSet) || ls < 0 {
 		return "", -1
 	}
-	theText := PrepareString(JoinAllStrings(this.translatedLine[this.lineSet[ls].initLine : this.lineSet[ls].lastLine+1]))
+	theText := PrepareString(JoinAllStrings(this.translatedLine[this.lineSet[ls].InitLine : this.lineSet[ls].LastLine+1]))
 	return theText, len([]rune(theText))
 }
 
-// ------------------------------------------
-// Different ways to print data to the stdout
-// ------------------------------------------
+// Get the original lines array
+// Returns the array with the original lines
+func (this *SubtitleFile) GetOriginalLines() []string {
+	return this.originalLine
+}
+
+// Get the translated lines array
+// Returns the array with the original lines
+func (this *SubtitleFile) GetTranslatedLines() []string {
+	return this.translatedLine
+}
+
+// GetLineSet returns the LineSet definition in SubtitleFile
+func (this *SubtitleFile) GetLineSet() []LineSet {
+	return this.lineSet
+}
+
+// --------------------------------------------
+// Different ways to print data to an io.Writer
+// --------------------------------------------
 
 // Print subtitle block data, one subtitle per line
 func (this *SubtitleFile) PrintSubtitlesData(f io.Writer) {
@@ -550,11 +617,11 @@ func (this *SubtitleFile) PrintSubtitlesData(f io.Writer) {
 func (this *SubtitleFile) PrintLineSetData() {
 	for i, theLineSet := range this.lineSet {
 		fmt.Printf("Lineset %3.3d, lines: %4.4d-%4.4d, Words: %4d/%-4d, Chars: %5d/%-5d, Ratio: %6.4f, Txt: |>%s<|\n",
-			i, theLineSet.initLine, theLineSet.lastLine,
+			i, theLineSet.InitLine, theLineSet.LastLine,
 			this.CountOriginalWordsInLineSet(i), this.CountTranslatedWordsInLineSet(i),
 			this.CountOriginalCharsInLineSet(i), this.CountTranslatedCharsInLineSet(i),
 			this.CalculateRatioOfLineSet(i),
-			PrintStringMaxWidth(theLineSet.translatedText, 50))
+			PrintStringMaxWidth(this.translatedSet[i], 50))
 	}
 }
 
@@ -575,7 +642,7 @@ func (this *SubtitleFile) PrintTranslatedLines() {
 // Print all the original and translated lines together
 func (this *SubtitleFile) PrintOriginalAndTranslatedLines() {
 	for i, theLineSet := range this.lineSet {
-		for j := theLineSet.initLine; j <= theLineSet.lastLine; j++ {
+		for j := theLineSet.InitLine; j <= theLineSet.LastLine; j++ {
 			fmt.Printf("%3.3d|%4.4d|>%s<|>%s<|\n",
 				i, j,
 				PrintStringMaxWidth(this.originalLine[j], 55),
@@ -599,7 +666,7 @@ func (this *SubtitleFile) PrintLineSetWithSplitData(theLineSet int) {
 	var target, excess float64
 
 	// Iterate over the lines of the lineSet theLineSet
-	for i := this.lineSet[theLineSet].initLine; i <= this.lineSet[theLineSet].lastLine; i++ {
+	for i := this.lineSet[theLineSet].InitLine; i <= this.lineSet[theLineSet].LastLine; i++ {
 
 		lenOrig = len([]rune(this.originalLine[i]))
 		lenTran = len([]rune(this.translatedLine[i]))
@@ -630,7 +697,7 @@ func (this *SubtitleFile) PrintOriginalSRT() {
 
 	for _, sbt := range this.subtitle {
 		sbt.Print()
-		for i := 0; i < sbt.nLines; i++ {
+		for i := 0; i < sbt.Nlines; i++ {
 			fmt.Println(this.originalLine[n])
 			n++
 		}
@@ -648,7 +715,7 @@ func (this *SubtitleFile) PrintTranslatedSRT() {
 
 	for _, sbt := range this.subtitle {
 		sbt.Print()
-		for i := 0; i < sbt.nLines; i++ {
+		for i := 0; i < sbt.Nlines; i++ {
 			fmt.Println(this.translatedLine[n])
 			n++
 		}
