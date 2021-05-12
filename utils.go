@@ -60,7 +60,7 @@ func PrepareString(data string) string {
 	return text
 }
 
-func JoinAllStrings(data []string) string {
+func JoinAllStrings(data ...string) string {
 	text := new(strings.Builder)
 
 	// Create a string adding all the lines
