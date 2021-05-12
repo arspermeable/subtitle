@@ -1,3 +1,8 @@
+// 
+// Package subtitle modelizes an SRT file and its translation into a second language.
+//
+// Some basic operations to manage subtitles are added
+//
 package subtitle
 
 // the min length of a line to be matched in the translation
