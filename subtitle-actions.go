@@ -11,7 +11,7 @@ import (
 // --------------------------------------------------
 
 // Move n translatedLine(s) from top of lineSet to bottom of previous
-func (this *SubtitleSRT) MoveLinesUpFromLineSet(lsFrom, n int) {
+func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom <= 0 || lsFrom >= len(this.lineSet) || n <= 0 {
 		return
@@ -39,9 +39,9 @@ func (this *SubtitleSRT) MoveLinesUpFromLineSet(lsFrom, n int) {
 }
 
 // Move n translated words(s) from top of lineSet to bottom of previous
-func (this *SubtitleSRT) MoveWordsUpFromLineSet(lsFrom, n int) {
+func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
-	if lsFrom <= 0 || lsFrom >= len(this.lineSet) || n <= 0 {
+	if lsFrom <= 0 || lsFrom > len(this.lineSet)-1 || n <= 0 {
 		return
 	}
 	// cap n to the number of words
@@ -65,12 +65,8 @@ func (this *SubtitleSRT) MoveWordsUpFromLineSet(lsFrom, n int) {
 	this.SplitTranslatedLineSetIntoLines(lsTo)
 }
 
-// Move words from one line to previous
-func (this *SubtitleSRT) MoveWordsUpFromLine(lsFrom, n int) {
-}
-
 // Move n translatedLine(s) from bottom of lineSet to top of next
-func (this *SubtitleSRT) MoveLinesDownFromLineSet(lsFrom, n int) {
+func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom < 0 || lsFrom >= (len(this.lineSet)-1) || n <= 0 {
 		return
@@ -98,9 +94,9 @@ func (this *SubtitleSRT) MoveLinesDownFromLineSet(lsFrom, n int) {
 }
 
 // Move n translated words(s) from bottom of lineSet to top of previous
-func (this *SubtitleSRT) MoveWordsDownFromLineSet(lsFrom, n int) {
+func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
-	if lsFrom <= 0 || lsFrom >= len(this.lineSet) || n <= 0 {
+	if lsFrom < 0 || lsFrom >= len(this.lineSet)-1 || n <= 0 {
 		return
 	}
 	// cap n to the number of words
@@ -122,10 +118,6 @@ func (this *SubtitleSRT) MoveWordsDownFromLineSet(lsFrom, n int) {
 	// Split the translation of the two affected lineSet into lines
 	this.SplitTranslatedLineSetIntoLines(lsFrom)
 	this.SplitTranslatedLineSetIntoLines(lsTo)
-}
-
-// (****)
-func (this *SubtitleSRT) MoveWordsDownFromLine(lsFrom, n int) {
 }
 
 // Split lineSet ls in two (ls and ls+1) at the originalLine ol
@@ -164,4 +156,9 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 // Merge lineSet ls and ls+1 into a single lineSet
 // (****)
 func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
+}
+
+// Merge lineSet ls-1 and ls into a single lineSet
+// (****)
+func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
 }
