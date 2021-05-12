@@ -161,13 +161,13 @@ func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
 		// (****) raise error
 		return
 	}
-	// Init line of LineSet ls+1 now is the init line of ls
-	this.lineSet[ls+1].InitLine = this.lineSet[ls].InitLine
+	// Last line of LineSet ls now is the last line of ls+1
+	this.lineSet[ls].LastLine = this.lineSet[ls+1].LastLine
 	// The translated text of the joint is the joint of the two translated texts
-	this.translatedSet[ls+1] = JoinAllStrings(this.translatedSet[ls], this.translatedSet[ls+1])
+	this.translatedSet[ls] = JoinAllStrings(this.translatedSet[ls], this.translatedSet[ls+1])
 	// Copy all the subsequent linesets to -1
-	copy(this.lineSet[ls:], this.lineSet[ls+1:])
-	copy(this.translatedSet[ls:], this.translatedSet[ls+1:])
+	this.lineSet = append(this.lineSet[:ls+1], this.lineSet[ls+2:]...)
+	this.translatedSet = append(this.translatedSet[:ls+1], this.translatedSet[ls+2:]...)
 }
 
 // MergeLineSetWithPrev merges the LineSet ls-1 with ls
@@ -183,6 +183,6 @@ func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
 	// The translated text of the joint is the joint of the two translated texts
 	this.translatedSet[ls-1] = JoinAllStrings(this.translatedSet[ls-1], this.translatedSet[ls])
 	// Copy all the subsequent linesets to -1
-	copy(this.lineSet[ls:], this.lineSet[ls+1:])
-	copy(this.translatedSet[ls:], this.translatedSet[ls+1:])
+	this.lineSet = append(this.lineSet[:ls], this.lineSet[ls+1:]...)
+	this.translatedSet = append(this.translatedSet[:ls], this.translatedSet[ls+1:]...)
 }
