@@ -1,5 +1,23 @@
 package subtitle
 
+func (this *SubtitleSRT) isFirstLineOfLineSet(theLine int) bool {
+	for _, ls := range this.lineSet {
+		if ls.InitLine == theLine {
+			return true
+		}
+	}
+	return false
+}
+
+func (this *SubtitleSRT) isLastLineOfLineSet(theLine int) bool {
+	for _, ls := range this.lineSet {
+		if ls.LastLine == theLine {
+			return true
+		}
+	}
+	return false
+}
+
 func (this *SubtitleSRT) isEqual(other SubtitleSRT) bool {
 	// subtitleBlock
 	if len(this.subtitleBlock) != len(other.subtitleBlock) {

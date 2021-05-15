@@ -10,7 +10,10 @@ import (
 // Functions to manualy manipulate lineSets and lines
 // --------------------------------------------------
 
-// Move n translatedLine(s) from top of lineSet to bottom of previous
+// MoveLinesFromLineSetToPrev moves n translatedLine(s)
+// from top of lineSet to bottom of previous.
+// Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
+// It takes: lineset to move from and number of lines
 func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom <= 0 || lsFrom >= len(this.lineSet) || n <= 0 {
@@ -38,7 +41,10 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	this.SplitTranslatedLineSetIntoLines(lsTo)
 }
 
-// Move n translated words(s) from top of lineSet to bottom of previous
+// MoveWordsFromLineSetToPrev moves n translated word(s)
+// from top of lineSet to bottom of previous.
+// Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
+// It takes: lineset to move from and number of words
 func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if lsFrom <= 0 || lsFrom > len(this.lineSet)-1 || n <= 0 {
@@ -65,7 +71,10 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 	this.SplitTranslatedLineSetIntoLines(lsTo)
 }
 
-// Move n translatedLine(s) from bottom of lineSet to top of next
+// MoveLinesFromLineSetToNext moves n translatedLine(s)
+// from bottom of lineSet to top of previous.
+// Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
+// It takes: lineset to move from and number of lines
 func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom < 0 || lsFrom >= (len(this.lineSet)-1) || n <= 0 {
@@ -93,7 +102,10 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	this.SplitTranslatedLineSetIntoLines(lsTo)
 }
 
-// Move n translated words(s) from bottom of lineSet to top of previous
+// MoveWordsFromLineSetToNext moves n translated words(s)
+// from bottom of lineSet to top of previous.
+// Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
+// It takes: lineset to move from and number of words
 func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if lsFrom < 0 || lsFrom >= len(this.lineSet)-1 || n <= 0 {
@@ -120,9 +132,62 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 	this.SplitTranslatedLineSetIntoLines(lsTo)
 }
 
-// Split lineSet ls in two (ls and ls+1) at the originalLine ol
-// lineSet[ls] = initLine..ol-1
-// lineset[ls+1] = ok..LastLine
+// MoveWordFromLineToPrev moves 1 translated words(s)
+// from the beginning of a line to the end of the previous one.
+// It cannot be used to move words between linesets.
+// Affected lineset is *not* processed with SplitTranslatedLineSetIntoLines.
+// It takes: line number to move from
+func (this *SubtitleSRT) MoveWordFromLineToPrev(lineFrom int) {
+	// Verify that lineFrom is the first one of a lineset
+	if this.isFirstLineOfLineSet(lineFrom) {
+		// if so, do nothing
+		return
+	}
+
+	// Find the first word of the line
+	rs := `^(\S+\s*)`
+	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedLine[lineFrom])
+	if loc == nil {
+		return
+	}
+	lineTo := lineFrom - 1
+
+	// Add the first word of lineFrom to lineTo
+	this.translatedLine[lineTo] = strings.TrimSpace(this.translatedLine[lineTo] + " " + this.translatedLine[lineFrom][loc[0]:loc[1]])
+	// Remove it from lineFrom
+	this.translatedLine[lineFrom] = this.translatedLine[lineFrom][loc[1]:]
+}
+
+// MoveWordFromLineToNext moves 1 translated words(s)
+// from the end of a line to the beginning of the next one.
+// It cannot be used to move words between linesets.
+// Affected lineset is *not* processed with SplitTranslatedLineSetIntoLines.
+// It takes: line number to move from
+func (this *SubtitleSRT) MoveWordFromLineToNext(lineFrom int) {
+	// Verify that lineFrom is the last one of a lineset
+	if this.isLastLineOfLineSet(lineFrom) {
+		// if so, do nothing
+		return
+	}
+
+	// Find the last word of the line
+	rs := `(\s*\S+)$`
+	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedLine[lineFrom])
+	if loc == nil {
+		return
+	}
+	lineTo := lineFrom + 1
+
+	// Add the last word of lineFrom to lineTo
+	this.translatedLine[lineTo] = strings.TrimSpace(this.translatedLine[lineFrom][loc[0]:loc[1]] + " " + this.translatedLine[lineTo])
+	// Remove it from lineFrom
+	this.translatedLine[lineFrom] = this.translatedLine[lineFrom][:loc[0]]
+}
+
+// SplitLineSetByLine splits a lineset in two by a specified line.
+// The break line will be part of the second lineset.
+// Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
+// It takes the lineset to be split and the line to break at.
 func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if ls < 0 || ls >= len(this.lineSet) {
@@ -153,8 +218,10 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	this.SplitTranslatedLineSetIntoLines(ls + 1)
 }
 
-// MergeLineSetWithNext merges the LineSet ls with ls+1
+// MergeLineSetWithNext merges a LineSet with the next one
 // into a single lineSet
+// Resultant lineset is *not* processed with SplitTranslatedLineSetIntoLines.
+// It takes the lineset to merge.
 func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
 	// Verify that the situation is legal
 	if ls < 0 || ls >= len(this.lineSet)-1 {
@@ -170,8 +237,10 @@ func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
 	this.translatedSet = append(this.translatedSet[:ls+1], this.translatedSet[ls+2:]...)
 }
 
-// MergeLineSetWithPrev merges the LineSet ls-1 with ls
+// MergeLineSetWithPrev merges a LineSet with the previous one
 // into a single lineSet
+// Resultant lineset is *not* processed with SplitTranslatedLineSetIntoLines.
+// It takes the lineset to merge.
 func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
 	// Verify that the situation is legal
 	if ls <= 0 || ls > len(this.lineSet)-1 {
