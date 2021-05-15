@@ -23,14 +23,14 @@ func TestWriteReadFile(t *testing.T) {
 	subt.ImportTranslatedText(PrepareString(string(content)))
 
 	// write to JSON
-	err = subt.writeToFile()
+	err = subt.WriteToFile()
 	if err != nil {
 		t.Fatal("subt.writeToFile(): Error writing files")
 	}
 
 	// read from JSON
 	var subt2 SubtitleSRT
-	err = subt2.readFromFile()
+	err = subt2.ReadFromFile()
 	if err != nil {
 		t.Fatal("subt.readFromFile(): Error reading files")
 	}
@@ -251,5 +251,38 @@ func TestMoveWordLineToPrevLine14(t *testing.T) {
 	want = "Una línea exacta"
 	if subt.translatedLine[11] != want {
 		t.Fatalf("MoveWordFromLineToPrev(8): Line 8: Want '%s' have '%s'", want, subt.translatedLine[0])
+	}
+}
+
+func TestIsNotLoaded(t *testing.T) {
+	var subt SubtitleSRT
+
+	isLoaded := subt.IsLoaded()
+
+	if isLoaded {
+		t.Fatal("IsLoaded(): Not isLoaded test, Want false have true")
+	}
+}
+
+func TestIsLoaded(t *testing.T) {
+	fileNameSrt := "../datasubt/en.srt"
+	fileNameTxt := "../datasubt/es.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.ImportOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.ImportTranslatedText(PrepareString(string(content)))
+
+	isLoaded := subt.IsLoaded()
+
+	if !isLoaded {
+		t.Fatal("IsLoaded():  isLoaded test, Want true have false")
 	}
 }

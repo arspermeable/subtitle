@@ -1,5 +1,32 @@
 package subtitle
 
+// IsLoaded returns true if the data has been loaded into this
+// Data loaded means that the original SRT and the translation TRT have been loaded
+// and the text has been split into LineSets
+func (this *SubtitleSRT) IsLoaded() bool {
+	return this.IsLoadedSRT() && this.IsLoadedTRT() && this.IsSplit()
+}
+
+// IsLoadedSRT returns true if the original SRT has been loaded into this
+// SRT loaded means that subtitleBlock and originalLine have length > 0
+func (this *SubtitleSRT) IsLoadedSRT() bool {
+	return len(this.subtitleBlock) > 0 && len(this.originalLine) > 0
+}
+
+// IsLoadedTRT returns true if the translated TRT has been loaded into this
+// TRT loaded means that translatedText is not an empty string
+func (this *SubtitleSRT) IsLoadedTRT() bool {
+	return this.translatedText != ""
+}
+
+// IsSplit returns true if the text has been split in linesets
+// Text split means that lineSet and translatedSet has length>0,
+// and translatedLine has length > 0 (although this is trivial per implementation)
+func (this *SubtitleSRT) IsSplit() bool {
+	return len(this.lineSet) > 0 && len(this.translatedSet) > 0 && len(this.translatedLine) > 0
+}
+
+// isFirstLineOfLineSet returns true if the line is the first of any lineSet
 func (this *SubtitleSRT) isFirstLineOfLineSet(theLine int) bool {
 	for _, ls := range this.lineSet {
 		if ls.InitLine == theLine {
@@ -9,6 +36,7 @@ func (this *SubtitleSRT) isFirstLineOfLineSet(theLine int) bool {
 	return false
 }
 
+// isLastLineOfLineSet returns true if the line is the last of any lineSet
 func (this *SubtitleSRT) isLastLineOfLineSet(theLine int) bool {
 	for _, ls := range this.lineSet {
 		if ls.LastLine == theLine {
@@ -18,6 +46,8 @@ func (this *SubtitleSRT) isLastLineOfLineSet(theLine int) bool {
 	return false
 }
 
+// isEqual returns true if the two SubtitleSRT are the same
+// It's a custom deep comparison of struct/slices
 func (this *SubtitleSRT) isEqual(other SubtitleSRT) bool {
 	// subtitleBlock
 	if len(this.subtitleBlock) != len(other.subtitleBlock) {
