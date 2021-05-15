@@ -15,7 +15,7 @@ import (
 //    translatedLine -> translatedline.json
 //    translatedSet -> translatedset.json
 //    translatedText -> translatedtext.json
-func (this *SubtitleSRT) writeToFile() error {
+func (this *SubtitleSRT) WriteToFile() error {
 	var data []byte
 	var err error
 
@@ -90,7 +90,7 @@ func (this *SubtitleSRT) writeToFile() error {
 //    translatedLine <- translatedline.json
 //    translatedSet <- translatedset.json
 //    translatedText <- translatedtext.json
-func (this *SubtitleSRT) readFromFile() error {
+func (this *SubtitleSRT) ReadFromFile() error {
 	var data []byte
 	var err error
 
