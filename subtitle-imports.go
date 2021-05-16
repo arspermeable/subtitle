@@ -220,3 +220,12 @@ func (this *SubtitleSRT) SplitTranslatedLineSetIntoLines(theLineSet int) {
 		data = strings.TrimSpace(strings.TrimPrefix(data, newLine))
 	}
 }
+
+func (this *SubtitleSRT) DeleteAllData() {
+	this.subtitleBlock = nil
+	this.lineSet = nil
+	this.originalLine = nil
+	this.translatedLine = nil
+	this.translatedSet = nil
+	this.translatedText = ""
+}

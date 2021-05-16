@@ -286,3 +286,25 @@ func TestIsLoaded(t *testing.T) {
 		t.Fatal("IsLoaded():  isLoaded test, Want true have false")
 	}
 }
+
+func TestDeleteAllData(t *testing.T) {
+	fileNameSrt := "../datasubt/en.srt"
+	fileNameTxt := "../datasubt/es.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.ImportOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.ImportTranslatedText(PrepareString(string(content)))
+
+	subt.DeleteAllData()
+	if subt.IsLoaded() {
+		t.Fatal("DeleteAllData(): Data hasn't been deleted, IsLoaded()=true")
+	}
+}
