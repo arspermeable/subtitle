@@ -60,11 +60,30 @@ func PrepareString(data string) string {
 	return text
 }
 
+// JoinAllStrings concatenates all the strings using space
+// as separator. Then, it trims all spaces.
 func JoinAllStrings(data ...string) string {
 	text := new(strings.Builder)
 
 	// Create a string adding all the lines
 	for _, theLine := range data {
+		text.WriteString(theLine)
+		text.WriteString(" ")
+	}
+	return strings.TrimSpace(text.String())
+}
+
+// JoinAllLines concatenates all the lines using space
+// as separator and replacing blank lines by []
+// Then, it trims all spaces.
+func JoinAllLines(data ...string) string {
+	text := new(strings.Builder)
+
+	// Create a string adding all the lines
+	for _, theLine := range data {
+		if theLine == "" {
+			theLine = "[]"
+		}
 		text.WriteString(theLine)
 		text.WriteString(" ")
 	}
