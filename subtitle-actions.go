@@ -37,8 +37,8 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	this.translatedSet[lsTo] = (this.translatedSet[lsTo] + " " + toBeRemoved)
 
 	// Split the translation of the two affected lineSet into lines
-	this.SplitTranslatedLineSetIntoLines(lsFrom)
-	this.SplitTranslatedLineSetIntoLines(lsTo)
+	this.splitTranslatedLineSetIntoLines(lsFrom)
+	this.splitTranslatedLineSetIntoLines(lsTo)
 }
 
 // MoveWordsFromLineSetToPrev moves n translated word(s)
@@ -67,8 +67,8 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 	this.translatedSet[lsFrom] = this.translatedSet[lsFrom][loc[1]:]
 
 	// Split the translation of the two affected lineSet into lines
-	this.SplitTranslatedLineSetIntoLines(lsFrom)
-	this.SplitTranslatedLineSetIntoLines(lsTo)
+	this.splitTranslatedLineSetIntoLines(lsFrom)
+	this.splitTranslatedLineSetIntoLines(lsTo)
 }
 
 // MoveLinesFromLineSetToNext moves n translatedLine(s)
@@ -98,8 +98,8 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	this.translatedSet[lsTo] = (toBeRemoved + " " + this.translatedSet[lsTo])
 
 	// Split the translation of the two affected lineSet into lines
-	this.SplitTranslatedLineSetIntoLines(lsFrom)
-	this.SplitTranslatedLineSetIntoLines(lsTo)
+	this.splitTranslatedLineSetIntoLines(lsFrom)
+	this.splitTranslatedLineSetIntoLines(lsTo)
 }
 
 // MoveWordsFromLineSetToNext moves n translated words(s)
@@ -128,8 +128,8 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 	this.translatedSet[lsFrom] = this.translatedSet[lsFrom][:loc[0]]
 
 	// Split the translation of the two affected lineSet into lines
-	this.SplitTranslatedLineSetIntoLines(lsFrom)
-	this.SplitTranslatedLineSetIntoLines(lsTo)
+	this.splitTranslatedLineSetIntoLines(lsFrom)
+	this.splitTranslatedLineSetIntoLines(lsTo)
 }
 
 // MoveWordFromLineToPrev moves 1 translated words(s)
@@ -139,7 +139,7 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 // It takes: line number to move from
 func (this *SubtitleSRT) MoveWordFromLineToPrev(lineFrom int) {
 	// Verify that lineFrom is the first one of a lineset
-	if this.isFirstLineOfLineSet(lineFrom) {
+	if this.IsFirstLineOfLineSet(lineFrom) {
 		// if so, do nothing
 		return
 	}
@@ -165,7 +165,7 @@ func (this *SubtitleSRT) MoveWordFromLineToPrev(lineFrom int) {
 // It takes: line number to move from
 func (this *SubtitleSRT) MoveWordFromLineToNext(lineFrom int) {
 	// Verify that lineFrom is the last one of a lineset
-	if this.isLastLineOfLineSet(lineFrom) {
+	if this.IsLastLineOfLineSet(lineFrom) {
 		// if so, do nothing
 		return
 	}
@@ -214,8 +214,8 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	this.translatedSet[ls] = JoinAllStrings(this.translatedLine[initLine:breakLine]...)
 	this.translatedSet[ls+1] = JoinAllStrings(this.translatedLine[breakLine : lastLine+1]...)
 	// Split again the affected lineSets
-	this.SplitTranslatedLineSetIntoLines(ls)
-	this.SplitTranslatedLineSetIntoLines(ls + 1)
+	this.splitTranslatedLineSetIntoLines(ls)
+	this.splitTranslatedLineSetIntoLines(ls + 1)
 }
 
 // MergeLineSetWithNext merges a LineSet with the next one

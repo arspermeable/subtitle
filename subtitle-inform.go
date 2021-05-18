@@ -29,7 +29,7 @@ func (this *SubtitleSRT) CountLines() int {
 
 // CountOriginalWords returns the total number of original words in SubtitleSRT
 func (this *SubtitleSRT) CountOriginalWords() int {
-	originalText, _ := this.GetOriginalTextFromLines()
+	originalText, _ := this.GetOriginalText()
 	return len(strings.Fields(originalText))
 }
 
@@ -53,7 +53,7 @@ func (this *SubtitleSRT) CountOriginalWordsInLine(theLine int) int {
 
 // CountOriginalChars returns the original chars in SubtitleSRT
 func (this *SubtitleSRT) CountOriginalChars() int {
-	originalText, _ := this.GetOriginalTextFromLines()
+	originalText, _ := this.GetOriginalText()
 	return len([]rune(originalText)) - len(this.originalLine) + 1
 }
 

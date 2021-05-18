@@ -15,12 +15,12 @@ func TestWriteReadFile(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// write to JSON
 	err = subt.WriteToFile()
@@ -35,7 +35,7 @@ func TestWriteReadFile(t *testing.T) {
 		t.Fatal("subt.readFromFile(): Error reading files")
 	}
 
-	if !(subt.isEqual(subt2)) {
+	if !(subt.IsEqual(subt2)) {
 		t.Fatal("Subt IO: Read object is different from original object")
 	}
 }
@@ -49,12 +49,12 @@ func TestMoveWordToPrev(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 1 to 0
 	subt.MoveWordFromLineToPrev(1)
@@ -78,12 +78,12 @@ func TestMoveWordToPrevSingleWord(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 13 to 12
 	subt.MoveWordFromLineToPrev(13)
@@ -106,12 +106,12 @@ func TestMoveWordFrom0toNext(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 0 to 1
 	subt.MoveWordFromLineToNext(0)
@@ -135,12 +135,12 @@ func TestMoveWordToNextSingleWord(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 9 to 10
 	subt.MoveWordFromLineToNext(9)
@@ -164,12 +164,12 @@ func TestMoveWordToPreviousLine0(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 0 to previous, check that nothing happened
 	subt.MoveWordFromLineToPrev(0)
@@ -189,12 +189,12 @@ func TestMoveWordToNextLine15(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from last line to next, check that nothing happened
 	subt.MoveWordFromLineToNext(15)
@@ -214,12 +214,12 @@ func TestMoveWordLineToNextLine1(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 1 to next (last of lineset), check that nothing happened
 	subt.MoveWordFromLineToNext(1)
@@ -239,12 +239,12 @@ func TestMoveWordLineToPrevLine14(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	// Move word from line 11 to previous (first of lineset), check that nothing happened
 	subt.MoveWordFromLineToPrev(11)
@@ -273,12 +273,12 @@ func TestIsLoaded(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
 	isLoaded := subt.IsLoaded()
 
@@ -296,15 +296,36 @@ func TestDeleteAllData(t *testing.T) {
 	data, err := ioutil.ReadFile(fileNameSrt)
 	check(err)
 	reader := strings.NewReader(string(data))
-	subt.ImportOriginalSrt(reader)
+	subt.SetOriginalSrt(reader)
 
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.ImportTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(PrepareString(string(content)))
 
-	subt.DeleteAllData()
+	subt.DeleteSubtitleSrt()
 	if subt.IsLoaded() {
-		t.Fatal("DeleteAllData(): Data hasn't been deleted, IsLoaded()=true")
+		t.Fatal("DeleteSubtitleSrt(): Data hasn't been deleted, IsLoaded()=true")
+	}
+}
+
+func TestTranslationConsistency(t *testing.T) {
+	fileNameSrt := "../datasubt/en.srt"
+	fileNameTxt := "../datasubt/es.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(PrepareString(string(content)))
+
+	if !subt.IsTranslationConsistent() {
+		t.Fatal("IsTranslationConsistent(): Returns false, wanted true")
 	}
 }

@@ -27,7 +27,7 @@ func (this *SubtitleSRT) IsSplit() bool {
 }
 
 // isFirstLineOfLineSet returns true if the line is the first of any lineSet
-func (this *SubtitleSRT) isFirstLineOfLineSet(theLine int) bool {
+func (this *SubtitleSRT) IsFirstLineOfLineSet(theLine int) bool {
 	for _, ls := range this.lineSet {
 		if ls.InitLine == theLine {
 			return true
@@ -37,7 +37,7 @@ func (this *SubtitleSRT) isFirstLineOfLineSet(theLine int) bool {
 }
 
 // isLastLineOfLineSet returns true if the line is the last of any lineSet
-func (this *SubtitleSRT) isLastLineOfLineSet(theLine int) bool {
+func (this *SubtitleSRT) IsLastLineOfLineSet(theLine int) bool {
 	for _, ls := range this.lineSet {
 		if ls.LastLine == theLine {
 			return true
@@ -48,7 +48,7 @@ func (this *SubtitleSRT) isLastLineOfLineSet(theLine int) bool {
 
 // isEqual returns true if the two SubtitleSRT are the same
 // It's a custom deep comparison of struct/slices
-func (this *SubtitleSRT) isEqual(other SubtitleSRT) bool {
+func (this *SubtitleSRT) IsEqual(other SubtitleSRT) bool {
 	// subtitleBlock
 	if len(this.subtitleBlock) != len(other.subtitleBlock) {
 		return false
@@ -96,6 +96,19 @@ func (this *SubtitleSRT) isEqual(other SubtitleSRT) bool {
 	}
 	// translatedText
 	if this.translatedText != other.translatedText {
+		return false
+	}
+	return true
+}
+
+// isTranslationConsistent returns true if the translatedText,
+// the translatedText from linesets and the translatedText from
+// lines is the same.
+func (this *SubtitleSRT) IsTranslationConsistent() bool {
+	// Verify the translatedLines
+	theTextLines := PrepareString(JoinAllStrings(this.translatedLine...))
+	theTextSets := PrepareString(JoinAllStrings(this.translatedSet...))
+	if theTextLines != theTextSets {
 		return false
 	}
 	return true
