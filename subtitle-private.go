@@ -15,7 +15,7 @@ func (this *SubtitleSRT) appendSubtitle(data string) {
 	// Extract the lines
 	nLine := 2
 	for OK := true; OK; OK = nLine < len(lines) {
-		var theLine string
+		theLine := "[]"
 		// If there is a line, get it
 		if len(lines) > nLine {
 			theLine = PrepareString(lines[nLine])
