@@ -37,7 +37,7 @@ func (this *SubtitleSRT) appendSubtitle(data string) {
 func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 
 	// Kind: isExact or not - initialy not
-	isExact := false
+	currentSetIsExact := false
 	// Translated text to be splitted
 	data := this.translatedText
 	// Create the first newLineSet
@@ -54,7 +54,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 		isMiniLine = false
 
 		// Set the searchRegExp
-		if theLine == "" {
+		if theLine == "" || theLine == "[]" {
 			// This line is empty, search for []
 			searchRegexp = `\[\]`
 		} else if matched, _ := regexp.MatchString(`\[.+\]`, theLine); matched {
@@ -75,17 +75,17 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 		//    - OR found in the middle of the text, but it is a miniLine
 		//    - OR regular line found in the middle of the text while processing an isExact set
 		//			this is a weird case, because... where do we put the text in the middle?
-		found := !(loc == nil || (loc[0] != 0 && isMiniLine) || (loc[0] != 0 && !isMiniLine && isExact))
+		found := !(loc == nil || (loc[0] != 0 && isMiniLine) || (loc[0] != 0 && !isMiniLine && currentSetIsExact))
 		if !found {
 			// The line was not found
-			if isExact {
+			if currentSetIsExact {
 				// If current line set isExact, append the new line set
 				this.lineSet = append(this.lineSet, newLineSet)
 				this.translatedSet = append(this.translatedSet, newTranslatedSet)
 				// and open a new lineset that !isExact
 				newLineSet = LineSet{i, i}
 				newTranslatedSet = ""
-				isExact = false
+				currentSetIsExact = false
 			} else {
 				// If newLineSet set !isExact, add this line to the newLineSet
 				newLineSet.LastLine = i
@@ -99,7 +99,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 				newLineSet.LastLine = i
 				newTranslatedSet = ConcatWithSpace(newTranslatedSet, data[loc[0]:loc[1]])
 				// This line set continues isExact (just in case we are in the initial line)
-				isExact = true
+				currentSetIsExact = true
 				// Retire the found string
 				data = data[loc[1]+1:]
 			} else {
@@ -114,7 +114,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 				// Open a newLineSet that isExact
 				newLineSet = LineSet{i, i}
 				newTranslatedSet = ConcatWithSpace("", data[loc[0]:loc[1]])
-				isExact = true
+				currentSetIsExact = true
 				data = data[loc[1]+1:]
 			}
 		}
