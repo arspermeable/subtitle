@@ -117,7 +117,7 @@ func (this *SubtitleSRT) IsTranslationConsistent() bool {
 	if !strings.EqualFold(theTextLines, theTextSets) {
 		return false
 	}
-	if theText != theTextLines {
+	if !strings.EqualFold(theText, theTextLines) {
 		return false
 	}
 	return true

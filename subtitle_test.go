@@ -114,8 +114,8 @@ func TestSetAllData1b(t *testing.T) {
 
 }
 func TestWriteReadFile(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test1.srt"
-	var fileNameTxt string = "../datasubt/test1.txt"
+	var fileNameSrt string = "../datasubt/test2b.srt"
+	var fileNameTxt string = "../datasubt/w25es.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file
@@ -452,8 +452,8 @@ func TestIsLoaded(t *testing.T) {
 }
 
 func TestTranslationConsistency(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test1.srt"
-	var fileNameTxt string = "../datasubt/test1.txt"
+	var fileNameSrt string = "../datasubt/w25en.srt"
+	var fileNameTxt string = "../datasubt/w25es.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file

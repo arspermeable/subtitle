@@ -13,6 +13,9 @@ import (
 func (this *SubtitleSRT) SetOriginalSrt(reader io.Reader) {
 	// Scan the subtitle file for subtitle blocks
 	scanner := bufio.NewScanner(reader)
+	maxCapacity := 250 * 1024
+	buffer := make([]byte, maxCapacity)
+	scanner.Buffer(buffer, maxCapacity)
 	scanner.Split(SplitSubtitles)
 	// Scan and append
 	for scanner.Scan() {
