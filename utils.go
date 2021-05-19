@@ -99,6 +99,23 @@ func JoinAllLinesWithBrackets(data ...string) string {
 	return text.String()
 }
 
+// JoinAllLines concatenates all the lines using space
+// as separator and replacing blank lines by []
+// Then, it trims all spaces.
+func JoinAllLines(data ...string) string {
+	text := new(strings.Builder)
+
+	// Create a string adding all the lines
+	for _, theLine := range data {
+		if theLine == "" {
+			theLine = "[]"
+		}
+		text.WriteString(theLine)
+		text.WriteString(" ")
+	}
+	return strings.TrimSpace(text.String())
+}
+
 // Find closest extreme to the center
 // returns true if the first is closest or false if the second
 func ClosestFloat(center, first, second float64) bool {

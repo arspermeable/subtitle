@@ -7,8 +7,7 @@ package subtitle
 // Get the original text, returns text and length (runes)
 //
 func (this *SubtitleSRT) GetOriginalText() (string, int) {
-	// JoinAllLines add a [] for each blank line
-	theText := JoinAllLinesWithBrackets(this.originalLine...)
+	theText := prepareString(JoinAllLines(this.originalLine...))
 	return theText, len([]rune(theText))
 }
 
