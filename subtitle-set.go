@@ -24,7 +24,7 @@ func (this *SubtitleSRT) SetOriginalSrt(reader io.Reader) {
 
 // Import the translated text, into the translatedText field
 func (this *SubtitleSRT) SetTranslatedText(txt string) {
-	this.translatedText = txt
+	this.translatedText = prepareString(txt)
 	this.splitTranslatedTextIntoLineSets()
 	for i := range this.lineSet {
 		this.splitTranslatedLineSetIntoLines(i)
@@ -43,7 +43,7 @@ func (this *SubtitleSRT) SetTranslatedTextOfLineSet(lineSetNumber int, txt strin
 	// Split the translation of this lineSetNumber into lines
 	this.splitTranslatedLineSetIntoLines(lineSetNumber)
 	// build the translatedText with the new translatedSet
-	this.translatedText = JoinAllStrings(this.translatedSet...)
+	this.translatedText = joinStrings(this.translatedSet...)
 }
 
 // DeleteAllData resets to zero all SubtitleSRT object

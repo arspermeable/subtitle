@@ -29,7 +29,7 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	endLine := this.lineSet[lsFrom].InitLine + n
 
 	// Take last n lines of translastedLine
-	toBeRemoved := JoinAllStrings(this.translatedLine[initLine:endLine]...)
+	toBeRemoved := joinStrings(this.translatedLine[initLine:endLine]...)
 
 	// remove the text from the top of lineSet[lsFrom].translatedText
 	this.translatedSet[lsFrom] = strings.TrimSpace(strings.TrimPrefix(this.translatedSet[lsFrom], toBeRemoved))
@@ -90,7 +90,7 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	initLine := this.lineSet[lsFrom].LastLine - n + 1
 
 	// Take last n lines of translastedLine
-	toBeRemoved := JoinAllStrings(this.translatedLine[initLine:endLine]...)
+	toBeRemoved := joinStrings(this.translatedLine[initLine:endLine]...)
 
 	// remove the text from the bottom of lineSet[lsFrom].translatedText
 	this.translatedSet[lsFrom] = strings.TrimSpace(strings.TrimSuffix(this.translatedSet[lsFrom], toBeRemoved))
@@ -211,8 +211,8 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	this.lineSet[ls+1].LastLine = lastLine
 	this.lineSet[ls].LastLine = breakLine - 1
 	// Assign the translatedSet
-	this.translatedSet[ls] = JoinAllStrings(this.translatedLine[initLine:breakLine]...)
-	this.translatedSet[ls+1] = JoinAllStrings(this.translatedLine[breakLine : lastLine+1]...)
+	this.translatedSet[ls] = joinStrings(this.translatedLine[initLine:breakLine]...)
+	this.translatedSet[ls+1] = joinStrings(this.translatedLine[breakLine : lastLine+1]...)
 	// Split again the affected lineSets
 	this.splitTranslatedLineSetIntoLines(ls)
 	this.splitTranslatedLineSetIntoLines(ls + 1)
@@ -231,7 +231,7 @@ func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
 	// Last line of LineSet ls now is the last line of ls+1
 	this.lineSet[ls].LastLine = this.lineSet[ls+1].LastLine
 	// The translated text of the joint is the joint of the two translated texts
-	this.translatedSet[ls] = JoinAllStrings(this.translatedSet[ls], this.translatedSet[ls+1])
+	this.translatedSet[ls] = joinStrings(this.translatedSet[ls : ls+2]...)
 	// Copy all the subsequent linesets to -1
 	this.lineSet = append(this.lineSet[:ls+1], this.lineSet[ls+2:]...)
 	this.translatedSet = append(this.translatedSet[:ls+1], this.translatedSet[ls+2:]...)
@@ -250,7 +250,7 @@ func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
 	// Last line of LineSet ls-1 now is the last line of ls
 	this.lineSet[ls-1].LastLine = this.lineSet[ls].LastLine
 	// The translated text of the joint is the joint of the two translated texts
-	this.translatedSet[ls-1] = JoinAllStrings(this.translatedSet[ls-1], this.translatedSet[ls])
+	this.translatedSet[ls-1] = joinStrings(this.translatedSet[ls-1 : ls+1]...)
 	// Copy all the subsequent linesets to -1
 	this.lineSet = append(this.lineSet[:ls], this.lineSet[ls+1:]...)
 	this.translatedSet = append(this.translatedSet[:ls], this.translatedSet[ls+1:]...)

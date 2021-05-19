@@ -1,5 +1,10 @@
 package subtitle
 
+import (
+	"regexp"
+	"strings"
+)
+
 // IsLoaded returns true if the data has been loaded into this
 // Data loaded means that the original SRT and the translation TRT have been loaded
 // and the text has been split into LineSets
@@ -106,9 +111,13 @@ func (this *SubtitleSRT) IsEqual(other SubtitleSRT) bool {
 // lines is the same.
 func (this *SubtitleSRT) IsTranslationConsistent() bool {
 	// Verify the translatedLines
-	theTextLines := PrepareString(JoinAllStrings(this.translatedLine...))
-	theTextSets := PrepareString(JoinAllStrings(this.translatedSet...))
-	if theTextLines != theTextSets {
+	theTextLines := joinStrings(this.translatedLine...)
+	theTextSets := joinStrings(this.translatedSet...)
+	theText := regexp.MustCompile(`\s*\[\]\s*`).ReplaceAllString(this.translatedText, " ")
+	if !strings.EqualFold(theTextLines, theTextSets) {
+		return false
+	}
+	if theText != theTextLines {
 		return false
 	}
 	return true

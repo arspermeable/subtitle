@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestWriteReadFile(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+func TestSetAllData1(t *testing.T) {
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file
@@ -20,7 +20,114 @@ func TestWriteReadFile(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
+
+	// Verify the "controlled environment" worked well
+	want := []string{
+		"Hola a todos",
+		"¿cómo estáis?",
+		"[Música]",
+		"[Más música]",
+		"",
+		"[Música]",
+		"",
+		"Hola a \"todos\",",
+		"¿cómo estáis",
+		"hoy?",
+		"",
+		"Una línea exacta",
+		"otra línea exacta",
+		"exacta",
+		"Adios a todos",
+		"y gracias",
+	}
+	have := subt.GetTranslatedLines()
+	isEqual := true
+	if len(want) != len(have) {
+		isEqual = false
+	} else {
+		for i, v := range have {
+			if v != want[i] {
+				isEqual = false
+				break
+			}
+		}
+	}
+
+	if !isEqual {
+		t.Fatalf("Import SRT/TRT failed: want %q, have %q", want, subt.translatedLine)
+	}
+
+}
+
+func TestSetAllData1b(t *testing.T) {
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1b.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
+
+	// Verify the "controlled environment" worked well
+	want := []string{
+		"Hola a todos",
+		"¿cómo estáis?",
+		"[Música]",
+		"[Más música]",
+		"",
+		"[Música]",
+		"",
+		"Hola a \"todos\",",
+		"¿cómo estáis",
+		"hoy?",
+		"",
+		"Una línea exacta",
+		"otra línea exacta",
+		"exacta",
+		"Adios a todos",
+		"y gracias",
+	}
+	have := subt.GetTranslatedLines()
+	isEqual := true
+	if len(want) != len(have) {
+		isEqual = false
+	} else {
+		for i, v := range have {
+			if v != want[i] {
+				isEqual = false
+				break
+			}
+		}
+	}
+
+	if !isEqual {
+		t.Fatalf("Import SRT/TRT failed: want %q, have %q", want, subt.translatedLine)
+	}
+
+}
+func TestWriteReadFile(t *testing.T) {
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
 
 	// write to JSON
 	err = subt.WriteToFile()
@@ -41,9 +148,13 @@ func TestWriteReadFile(t *testing.T) {
 }
 
 func TestMoveWordToPrev(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -54,7 +165,7 @@ func TestMoveWordToPrev(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 1 to 0
 	subt.MoveWordFromLineToPrev(1)
@@ -69,10 +180,14 @@ func TestMoveWordToPrev(t *testing.T) {
 }
 
 func TestMoveWordToPrevSingleWord(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -83,7 +198,7 @@ func TestMoveWordToPrevSingleWord(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 13 to 12
 	subt.MoveWordFromLineToPrev(13)
@@ -98,9 +213,13 @@ func TestMoveWordToPrevSingleWord(t *testing.T) {
 }
 
 func TestMoveWordFrom0toNext(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -111,7 +230,7 @@ func TestMoveWordFrom0toNext(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 0 to 1
 	subt.MoveWordFromLineToNext(0)
@@ -126,10 +245,14 @@ func TestMoveWordFrom0toNext(t *testing.T) {
 }
 
 func TestMoveWordToNextSingleWord(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -140,7 +263,7 @@ func TestMoveWordToNextSingleWord(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 9 to 10
 	subt.MoveWordFromLineToNext(9)
@@ -155,10 +278,14 @@ func TestMoveWordToNextSingleWord(t *testing.T) {
 }
 
 func TestMoveWordToPreviousLine0(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -169,7 +296,7 @@ func TestMoveWordToPreviousLine0(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 0 to previous, check that nothing happened
 	subt.MoveWordFromLineToPrev(0)
@@ -180,10 +307,14 @@ func TestMoveWordToPreviousLine0(t *testing.T) {
 }
 
 func TestMoveWordToNextLine15(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -194,9 +325,13 @@ func TestMoveWordToNextLine15(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from last line to next, check that nothing happened
+	want = "y gracias"
+	if subt.translatedLine[15] != want {
+		t.Fatalf("MoveWordFromLineToNext(15): Line 15: Want '%s' have '%s'", want, subt.translatedLine[15])
+	}
 	subt.MoveWordFromLineToNext(15)
 	want = "y gracias"
 	if subt.translatedLine[15] != want {
@@ -205,10 +340,14 @@ func TestMoveWordToNextLine15(t *testing.T) {
 }
 
 func TestMoveWordLineToNextLine1(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -219,7 +358,7 @@ func TestMoveWordLineToNextLine1(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 1 to next (last of lineset), check that nothing happened
 	subt.MoveWordFromLineToNext(1)
@@ -230,10 +369,14 @@ func TestMoveWordLineToNextLine1(t *testing.T) {
 }
 
 func TestMoveWordLineToPrevLine14(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 	var want string
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
 
 	// Import the subtitle file
 	data, err := ioutil.ReadFile(fileNameSrt)
@@ -244,7 +387,7 @@ func TestMoveWordLineToPrevLine14(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	// Move word from line 11 to previous (first of lineset), check that nothing happened
 	subt.MoveWordFromLineToPrev(11)
@@ -254,19 +397,9 @@ func TestMoveWordLineToPrevLine14(t *testing.T) {
 	}
 }
 
-func TestIsNotLoaded(t *testing.T) {
-	var subt SubtitleSRT
-
-	isLoaded := subt.IsLoaded()
-
-	if isLoaded {
-		t.Fatal("IsLoaded(): Not isLoaded test, Want false have true")
-	}
-}
-
-func TestIsLoaded(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+func TestDeleteAllData(t *testing.T) {
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file
@@ -278,7 +411,38 @@ func TestIsLoaded(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
+
+	subt.DeleteSubtitleSrt()
+	if subt.IsLoaded() {
+		t.Fatal("DeleteSubtitleSrt(): Data hasn't been deleted, IsLoaded()=true")
+	}
+}
+
+func TestIsNotLoaded(t *testing.T) {
+	var subt SubtitleSRT
+
+	isLoaded := subt.IsLoaded()
+	if isLoaded {
+		t.Fatal("IsLoaded(): Want false have true")
+	}
+}
+
+func TestIsLoaded(t *testing.T) {
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
+	var subt SubtitleSRT
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
 
 	isLoaded := subt.IsLoaded()
 
@@ -287,31 +451,9 @@ func TestIsLoaded(t *testing.T) {
 	}
 }
 
-func TestDeleteAllData(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
-	var subt SubtitleSRT
-
-	// Import the subtitle file
-	data, err := ioutil.ReadFile(fileNameSrt)
-	check(err)
-	reader := strings.NewReader(string(data))
-	subt.SetOriginalSrt(reader)
-
-	// import the translated text
-	content, err := ioutil.ReadFile(fileNameTxt)
-	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
-
-	subt.DeleteSubtitleSrt()
-	if subt.IsLoaded() {
-		t.Fatal("DeleteSubtitleSrt(): Data hasn't been deleted, IsLoaded()=true")
-	}
-}
-
 func TestTranslationConsistency(t *testing.T) {
-	fileNameSrt := "../datasubt/en.srt"
-	fileNameTxt := "../datasubt/es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file
@@ -323,7 +465,7 @@ func TestTranslationConsistency(t *testing.T) {
 	// import the translated text
 	content, err := ioutil.ReadFile(fileNameTxt)
 	check(err)
-	subt.SetTranslatedText(PrepareString(string(content)))
+	subt.SetTranslatedText(string(content))
 
 	if !subt.IsTranslationConsistent() {
 		t.Fatal("IsTranslationConsistent(): Returns false, wanted true")

@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+// All the characters that may break a line
+// This could be simplified if a space can be guaranteed between any two punctuations
+// THIS VERSION ONLY \s is used
+// const sep = " ,::!\\.\\?\\)\\]-"
+
 // Add a subtitle block to the SubtitleSRT
 func (this *SubtitleSRT) appendSubtitle(data string) {
 
@@ -18,7 +23,7 @@ func (this *SubtitleSRT) appendSubtitle(data string) {
 		var theLine string
 		// If there is a line, get it
 		if len(lines) > nLine {
-			theLine = PrepareString(lines[nLine])
+			theLine = prepareString(lines[nLine])
 		}
 		// If it is not an empty line, or it is the first one, add it
 		if theLine != "" || nLine == 2 {
@@ -36,11 +41,27 @@ func (this *SubtitleSRT) appendSubtitle(data string) {
 // comparing original lines with translatedText
 func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 
+	// High level process:
+	//   1. Loop over all the original lines
+	//   2. Look for a match to the line in the translated text:
+	//         2.1. If the line is empty, it matches it with [] in the translated text
+	//         2.2. If the line is between [.*], it matches anything [.*]
+	//         2.3. If the line is longer than minmatch, it matches the same exact text
+	//              (so that we avoid matching things like 'a' or 'is' in the middle of a line)
+	//   3. Make blocks of contiguous lines that match exactly (isExact line sets) or not.
+	//      Each block stores the init and last line (both inclusive)
+	//   4. The translated text is split, and stored in translatedSet []string
+	//      Worth to mention, the [] representing blank lines in the translated text are not
+	//      stored in the translated set.
+
+	// the min length of a line to be matched in the translation
+	const minmatch = 15
+
 	// Kind: isExact or not - initialy not
 	isExact := false
 	// Translated text to be splitted
 	data := this.translatedText
-	// Create the first newLineSet
+	// Create the first newLineSet to store first/last line and newTranslatedSet to store text
 	newLineSet := LineSet{0, 0}
 	newTranslatedSet := ""
 	// String for the searchRegexp
@@ -58,7 +79,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 			// This line is empty, search for []
 			searchRegexp = `\[\]`
 		} else if matched, _ := regexp.MatchString(`\[.+\]`, theLine); matched {
-			// This line is a word+ between brackets
+			// This line is a word or several between brackets
 			searchRegexp = `\[([^]]+)\]`
 		} else {
 			// This line is a text line
@@ -79,7 +100,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 		if !found {
 			// The line was not found
 			if isExact {
-				// If current line set isExact, append the new line set
+				// If current line set isExact, append newLineSet, since it's over
 				this.lineSet = append(this.lineSet, newLineSet)
 				this.translatedSet = append(this.translatedSet, newTranslatedSet)
 				// and open a new lineset that !isExact
@@ -87,7 +108,7 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 				newTranslatedSet = ""
 				isExact = false
 			} else {
-				// If newLineSet set !isExact, add this line to the newLineSet
+				// If current newLineSet set !isExact, add this line to the newLineSet
 				newLineSet.LastLine = i
 			}
 		} else {
@@ -97,25 +118,25 @@ func (this *SubtitleSRT) splitTranslatedTextIntoLineSets() {
 				// newLineSet only can be isExact, or it is the initial one
 				// Add the line to the newLineSet and the text to the translated line
 				newLineSet.LastLine = i
-				newTranslatedSet = ConcatWithSpace(newTranslatedSet, data[loc[0]:loc[1]])
+				newTranslatedSet = ConcatWithSpace(newTranslatedSet, data[:loc[1]])
 				// This line set continues isExact (just in case we are in the initial line)
 				isExact = true
 				// Retire the found string
-				data = data[loc[1]+1:]
+				data = strings.TrimSpace(data[loc[1]:])
 			} else {
 				// The SearchRegexp is in the middle of the data.
 				// It cannot be isMiniLine because that is in !found case
 				// And it cannot be !isMiniLine and isExact for the same reason
 				// So, a new isExact line set is found while treating a !isExact newLineSet
 				// Add the text and close previous line set
-				newTranslatedSet = data[:loc[0]-1]
+				newTranslatedSet = data[:loc[0]]
 				this.lineSet = append(this.lineSet, newLineSet)
-				this.translatedSet = append(this.translatedSet, newTranslatedSet)
+				this.translatedSet = append(this.translatedSet, strings.TrimSpace(newTranslatedSet))
 				// Open a newLineSet that isExact
 				newLineSet = LineSet{i, i}
-				newTranslatedSet = ConcatWithSpace("", data[loc[0]:loc[1]])
+				newTranslatedSet = data[loc[0]:loc[1]]
 				isExact = true
-				data = data[loc[1]+1:]
+				data = strings.TrimSpace(data[loc[1]:])
 			}
 		}
 	}
@@ -139,26 +160,27 @@ func (this *SubtitleSRT) splitTranslatedLineSetIntoLines(theLineSet int) {
 	excess := 0.0
 
 	// Iterate over the lines of the lineSet theLineSet
-	for i := this.lineSet[theLineSet].InitLine; i <= this.lineSet[theLineSet].LastLine; i++ {
+	init := this.lineSet[theLineSet].InitLine
+	last := this.lineSet[theLineSet].LastLine
+	for i := init; i <= last; i++ {
 		// Set target size for the translated line
 		// Note that target is float64!
-
 		lenOrig := len([]rune(this.originalLine[i]))
 		target := ratio*float64(lenOrig) - excess
 		newLine := ""
 
-		if this.CountOriginalCharsInLine(i) == 0 {
-			// If the original line is empty, output empty data and keep excess
-			newLine = ""
-		} else if i == this.lineSet[theLineSet].LastLine {
+		if i == last {
 			// If this is the last line, output the rest of the data
 			newLine = data
 			excess = float64(len([]rune(newLine))) - target + 1.0
+		} else if lenOrig == 0 {
+			// If the original line is empty, output empty data and keep excess
+			newLine = ""
 		} else if data == "" {
 			// if the remaining string is "", return an empty string
 			newLine = ""
 			excess = -target
-			// and raise an error here!!
+			// (****) and maybe raise a warning here!!
 		} else {
 			var chars int
 			var subStrMax, subStrMin, re string
@@ -168,15 +190,16 @@ func (this *SubtitleSRT) splitTranslatedLineSetIntoLines(theLineSet int) {
 				chars = int(target + 0.5)
 			}
 			// Get the substring until the next separator after {chars}
-			// (****)!! Note: It must be {chars} unicode points not ascii (.)
-			re = fmt.Sprintf(`^([\P{M}\p{M}]{%d}[^%s]*[%s]*)`, chars, sep, sep)
-			subStrMax = PrepareString(regexp.MustCompile(re).FindString(data))
+			// Note: It must be {chars} unicode points not ascii (.)
+			// re = fmt.Sprintf(`^([\P{M}\p{M}]{%d}[^\s]*[\s]*)`, chars)
+			re = fmt.Sprintf(`^([\P{M}\p{M}]{%d}[^\s]*)`, chars)
+			subStrMax = regexp.MustCompile(re).FindString(data)
 			if subStrMax == "" {
 				subStrMax = data
 			}
 			// Get the substring until the prev separator before .{chars}
-			// re = fmt.Sprintf("([%s]*[^%s]*[%s]*)$", sep, sep, sep)
-			re = fmt.Sprintf("(\\p{Z}*[^%s]*[%s]*)$", sep, sep)
+			// re = fmt.Sprintf(`(\\p{Z}*[^\s]*[\s]*)$`)
+			re = fmt.Sprintf(`\p{Z}*[^\s]*$`)
 			subStrMin = strings.TrimSuffix(subStrMax, regexp.MustCompile(re).FindString(subStrMax))
 
 			// Now, let's apply euristic rules to define what to return...
@@ -188,6 +211,7 @@ func (this *SubtitleSRT) splitTranslatedLineSetIntoLines(theLineSet int) {
 			//   - prioritize if the subStr ends with a punct
 		}
 		// Now, update the output and data
+		// this.translatedLine[i] = strings.TrimSpace(newLine)
 		this.translatedLine[i] = newLine
 		data = strings.TrimSpace(strings.TrimPrefix(data, newLine))
 	}

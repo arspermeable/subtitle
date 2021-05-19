@@ -42,14 +42,14 @@ func SplitSubtitles(data []byte, atEOF bool) (advance int, token []byte, err err
 }
 
 // prepare a string, clean up, etc.
-func PrepareString(data string) string {
+func prepareString(data string) string {
 	// convert []byte to string
 	text := string(data)
 
 	// Note that \s == [ \t\f\n\r\v]
 
 	// Substitute double quotes to single quotes ?
-	text = regexp.MustCompile(`"`).ReplaceAllString(text, "'")
+	// text = regexp.MustCompile(`"`).ReplaceAllString(text, "'")
 	// Substitute multiple spaces to single space
 	text = regexp.MustCompile(`\s+`).ReplaceAllString(text, " ")
 	// Change space+punctuation to puntuation alone
@@ -60,15 +60,43 @@ func PrepareString(data string) string {
 	return text
 }
 
-func JoinAllStrings(data ...string) string {
+// JoinStrings concatenates all the lines using space as separator
+func joinStrings(data ...string) string {
+
+	switch len(data) {
+	case 0:
+		return ""
+	case 1:
+		return data[0]
+	}
+
+	text := new(strings.Builder)
+	text.WriteString(data[0])
+	for _, s := range data[1:] {
+		if s != "" {
+			text.WriteString(" ")
+			text.WriteString(s)
+
+		}
+	}
+	return text.String()
+}
+
+// JoinAllLines concatenates all the lines using space as separator
+// and replacing empty lines by []
+func JoinAllLinesWithBrackets(data ...string) string {
 	text := new(strings.Builder)
 
 	// Create a string adding all the lines
+	text.WriteString(data[0])
 	for _, theLine := range data {
-		text.WriteString(theLine)
 		text.WriteString(" ")
+		if theLine == "" {
+			theLine = "[]"
+		}
+		text.WriteString(theLine)
 	}
-	return strings.TrimSpace(text.String())
+	return text.String()
 }
 
 // Find closest extreme to the center

@@ -1,22 +1,14 @@
-// 
+//
 // Package subtitle modelizes an SRT file and its translation into a second language.
 //
 // Some basic operations to manage subtitles are added
 //
 package subtitle
 
-// the min length of a line to be matched in the translation
-const minmatch = 15
-
-// All the characters that may break a line
-const sep = " ,::!\\.\\?\\)\\]-"
-
 // A subtitle defines a subtitle block in a SRT file
 //   * the order (\d{1,n})
 //   * the time mark (hh:mm:ss,mmm --> hh:mm:ss,mmm)
 //   * Number of lines (1..n).
-// Note: If a subtitle includes no lines, then nLines=1 and "" is added
-//       (****) This can be improved using nLines=0 and adding "" automatically
 type SubtitleBlock struct {
 	Order    string
 	Timemark string
