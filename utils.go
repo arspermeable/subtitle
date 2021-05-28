@@ -48,12 +48,12 @@ func prepareString(data string) string {
 
 	// Note that \s == [ \t\f\n\r\v]
 
-	// Substitute double quotes to single quotes ?
-	// text = regexp.MustCompile(`"`).ReplaceAllString(text, "'")
 	// Substitute multiple spaces to single space
 	text = regexp.MustCompile(`\s+`).ReplaceAllString(text, " ")
-	// Change space+punctuation to puntuation alone
+	// Change space+punctuation to puntuation alone ('hi ! ya' => 'hi! ya')
 	text = regexp.MustCompile(`\s([,:;!\\?\.\)\]])`).ReplaceAllString(text, "$1")
+	// Change punctuation+char to puntuation+space+char ('hi!ya' => 'hi! ya')
+	text = regexp.MustCompile(`([,:;!\\?\.\)\]])(\S)`).ReplaceAllString(text, "$1 $2")
 	// Delete spaces at the beginning and end of text
 	text = strings.TrimSpace(text)
 

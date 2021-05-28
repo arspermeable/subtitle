@@ -114,8 +114,8 @@ func TestSetAllData1b(t *testing.T) {
 
 }
 func TestWriteReadFile(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test2b.srt"
-	var fileNameTxt string = "../datasubt/w25es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file
@@ -147,9 +147,113 @@ func TestWriteReadFile(t *testing.T) {
 	}
 }
 
+func TestMoveWordFromLineSetToPrev_ManyWords(t *testing.T) {
+	var fileNameSrt string
+	var fileNameTxt string
+	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
+
+	// Move word from line 3 to prev (lineSet[3] has 6 words)
+	subt.MoveWordsFromLineSetToPrev(3, 100)
+	want := []string{
+		"Hola a todos",
+		"¿cómo estáis?",
+		"[Música]",
+		"[Más música]",
+		"",
+		"[Música] Hola a \"todos\", ¿cómo estáis hoy?",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"Una línea exacta",
+		"otra línea exacta",
+		"exacta",
+		"Adios a todos",
+		"y gracias",
+	}
+
+	for i, str := range want {
+		if str != subt.translatedLine[i] {
+			t.Fatalf("MoveWordsFromLineToPrev(3,100): Line %d: Want '%s' have '%s'", i, str, subt.translatedLine[i])
+		}
+	}
+	if !subt.IsTranslationConsistent() {
+		t.Fatalf("MoveWordsFromLineSetToPrev(3,100): Translation is not consistent after movement")
+
+	}
+}
+
+func TestMoveWordFromLineSetToNext_ManyWords(t *testing.T) {
+	var fileNameSrt string
+	var fileNameTxt string
+	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
+
+	// Move word from line 3 to prev (lineSet[3] has 6 words)
+	subt.MoveWordsFromLineSetToNext(3, 100)
+	want := []string{
+		"Hola a todos",
+		"¿cómo estáis?",
+		"[Música]",
+		"[Más música]",
+		"",
+		"[Música]",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"Hola a \"todos\", ¿cómo estáis",
+		"hoy? Una línea exacta otra línea",
+		"exacta exacta",
+		"Adios a todos",
+		"y gracias",
+	}
+
+	for i, str := range want {
+		if str != subt.translatedLine[i] {
+			t.Fatalf("MoveWordsFromLineToNext(3,100): Line %d: Want '%s' have '%s'", i, str, subt.translatedLine[i])
+		}
+	}
+	if !subt.IsTranslationConsistent() {
+		t.Fatalf("MoveWordsFromLineSetToNext(3,100): Translation is not consistent after movement")
+
+	}
+}
+
 func TestMoveWordToPrev(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test1.srt"
-	var fileNameTxt string = "../datasubt/test1.txt"
+	var fileNameSrt string
+	var fileNameTxt string
 	var subt SubtitleSRT
 
 	// This test function uses simple test data
@@ -176,6 +280,74 @@ func TestMoveWordToPrev(t *testing.T) {
 	want = "estáis?"
 	if subt.translatedLine[1] != want {
 		t.Fatalf("MoveWordFromLineToPrev(1): Line 1: Want '%s' have '%s'", want, subt.translatedLine[1])
+	}
+}
+
+func TestMoveWordToPrevFirstLine(t *testing.T) {
+	var fileNameSrt string
+	var fileNameTxt string
+	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
+
+	// Move word from line 1 to 0
+	subt.MoveWordFromLineToPrev(14)
+	want := []string{"Una línea exacta", "otra línea exacta exacta", "Adios", "a todos y", "gracias"}
+	for i, str := range want {
+		if str != subt.translatedLine[11+i] {
+			t.Fatalf("MoveWordFromLineToPrev(14): Line %d: Want '%s' have '%s'", 11+i, str, subt.translatedLine[11+i])
+		}
+	}
+	if !subt.IsTranslationConsistent() {
+		t.Fatalf("MoveWordFromLineToPrev(14): Translation is not consistent after movement")
+
+	}
+}
+
+func TestMoveWordToNextLastLine(t *testing.T) {
+	var fileNameSrt string
+	var fileNameTxt string
+	var subt SubtitleSRT
+
+	// This test function uses simple test data
+	fileNameSrt = "../datasubt/test1.srt"
+	fileNameTxt = "../datasubt/test1.txt"
+
+	// Import the subtitle file
+	data, err := ioutil.ReadFile(fileNameSrt)
+	check(err)
+	reader := strings.NewReader(string(data))
+	subt.SetOriginalSrt(reader)
+
+	// import the translated text
+	content, err := ioutil.ReadFile(fileNameTxt)
+	check(err)
+	subt.SetTranslatedText(string(content))
+
+	// Move word from line 1 to 0
+	subt.MoveWordFromLineToNext(13)
+	want := []string{"Una línea exacta", "otra línea", "exacta", "exacta Adios a", "todos y gracias"}
+	for i, str := range want {
+		if str != subt.translatedLine[11+i] {
+			t.Fatalf("MoveWordFromLineToNext(13): Line %d: Want '%s' have '%s'", 11+i, str, subt.translatedLine[11+i])
+		}
+	}
+	if !subt.IsTranslationConsistent() {
+		t.Fatalf("MoveWordFromLineToNext(13): Translation is not consistent after movement")
+
 	}
 }
 
@@ -339,64 +511,6 @@ func TestMoveWordToNextLine15(t *testing.T) {
 	}
 }
 
-func TestMoveWordLineToNextLine1(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test1.srt"
-	var fileNameTxt string = "../datasubt/test1.txt"
-	var subt SubtitleSRT
-	var want string
-
-	// This test function uses simple test data
-	fileNameSrt = "../datasubt/test1.srt"
-	fileNameTxt = "../datasubt/test1.txt"
-
-	// Import the subtitle file
-	data, err := ioutil.ReadFile(fileNameSrt)
-	check(err)
-	reader := strings.NewReader(string(data))
-	subt.SetOriginalSrt(reader)
-
-	// import the translated text
-	content, err := ioutil.ReadFile(fileNameTxt)
-	check(err)
-	subt.SetTranslatedText(string(content))
-
-	// Move word from line 1 to next (last of lineset), check that nothing happened
-	subt.MoveWordFromLineToNext(1)
-	want = "¿cómo estáis?"
-	if subt.translatedLine[1] != want {
-		t.Fatalf("MoveWordFromLineToNext(1): Line 1: Want '%s' have '%s'", want, subt.translatedLine[0])
-	}
-}
-
-func TestMoveWordLineToPrevLine14(t *testing.T) {
-	var fileNameSrt string = "../datasubt/test1.srt"
-	var fileNameTxt string = "../datasubt/test1.txt"
-	var subt SubtitleSRT
-	var want string
-
-	// This test function uses simple test data
-	fileNameSrt = "../datasubt/test1.srt"
-	fileNameTxt = "../datasubt/test1.txt"
-
-	// Import the subtitle file
-	data, err := ioutil.ReadFile(fileNameSrt)
-	check(err)
-	reader := strings.NewReader(string(data))
-	subt.SetOriginalSrt(reader)
-
-	// import the translated text
-	content, err := ioutil.ReadFile(fileNameTxt)
-	check(err)
-	subt.SetTranslatedText(string(content))
-
-	// Move word from line 11 to previous (first of lineset), check that nothing happened
-	subt.MoveWordFromLineToPrev(11)
-	want = "Una línea exacta"
-	if subt.translatedLine[11] != want {
-		t.Fatalf("MoveWordFromLineToPrev(8): Line 8: Want '%s' have '%s'", want, subt.translatedLine[0])
-	}
-}
-
 func TestDeleteAllData(t *testing.T) {
 	var fileNameSrt string = "../datasubt/test1.srt"
 	var fileNameTxt string = "../datasubt/test1.txt"
@@ -452,8 +566,8 @@ func TestIsLoaded(t *testing.T) {
 }
 
 func TestTranslationConsistency(t *testing.T) {
-	var fileNameSrt string = "../datasubt/w25en.srt"
-	var fileNameTxt string = "../datasubt/w25es.txt"
+	var fileNameSrt string = "../datasubt/test1.srt"
+	var fileNameTxt string = "../datasubt/test1.txt"
 	var subt SubtitleSRT
 
 	// Import the subtitle file

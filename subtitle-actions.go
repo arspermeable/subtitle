@@ -13,7 +13,7 @@ import (
 // MoveLinesFromLineSetToPrev moves n translatedLine(s)
 // from top of lineSet to bottom of previous.
 // Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
-// It takes: lineset to move from and number of lines
+// Input: lineset to move from and number of lines
 func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom <= 0 || lsFrom >= len(this.lineSet) || n <= 0 {
@@ -44,26 +44,27 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToPrev(lsFrom, n int) {
 // MoveWordsFromLineSetToPrev moves n translated word(s)
 // from top of lineSet to bottom of previous.
 // Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
-// It takes: lineset to move from and number of words
+// Input: lineset to move from and number of words
 func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if lsFrom <= 0 || lsFrom > len(this.lineSet)-1 || n <= 0 {
 		return
 	}
 	// cap n to the number of words
-	if n > this.CountTranslatedWordsInLineSet(lsFrom) {
-		n = this.CountTranslatedWordsInLineSet(lsFrom)
+	maxWords := this.CountTranslatedWordsInLineSet(lsFrom)
+	if n > maxWords {
+		n = maxWords
 	}
 	// Prepare local variables
 	lsTo := lsFrom - 1
-	rs := fmt.Sprintf(`^(\S+\s+){%d}`, n)
+	rs := fmt.Sprintf(`^(\S+\s*){%d}`, n)
 	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedSet[lsFrom])
 	if loc == nil {
 		return
 	}
 
 	// Remove the first n words from lsFrom and add it to lsTo
-	this.translatedSet[lsTo] = this.translatedSet[lsTo] + " " + this.translatedSet[lsFrom][loc[0]:loc[1]]
+	this.translatedSet[lsTo] = this.translatedSet[lsTo] + " " + strings.TrimSpace(this.translatedSet[lsFrom][loc[0]:loc[1]])
 	this.translatedSet[lsFrom] = this.translatedSet[lsFrom][loc[1]:]
 
 	// Split the translation of the two affected lineSet into lines
@@ -74,7 +75,7 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToPrev(lsFrom, n int) {
 // MoveLinesFromLineSetToNext moves n translatedLine(s)
 // from bottom of lineSet to top of previous.
 // Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
-// It takes: lineset to move from and number of lines
+// Input: lineset to move from and number of lines
 func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (1 .. #lineSet-1)
 	if lsFrom < 0 || lsFrom >= (len(this.lineSet)-1) || n <= 0 {
@@ -105,19 +106,20 @@ func (this *SubtitleSRT) MoveLinesFromLineSetToNext(lsFrom, n int) {
 // MoveWordsFromLineSetToNext moves n translated words(s)
 // from bottom of lineSet to top of previous.
 // Then, both linesets are processed with SplitTranslatedLineSetIntoLines.
-// It takes: lineset to move from and number of words
+// Input: lineset to move from and number of words
 func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 	// Verify that lsFrom is a valid lineset (0 .. #lineSet)
 	if lsFrom < 0 || lsFrom >= len(this.lineSet)-1 || n <= 0 {
 		return
 	}
 	// cap n to the number of words
-	if n > this.CountTranslatedWordsInLineSet(lsFrom) {
-		n = this.CountTranslatedWordsInLineSet(lsFrom)
+	maxWords := this.CountTranslatedWordsInLineSet(lsFrom)
+	if n > maxWords {
+		n = maxWords
 	}
 	// Prepare local variables
 	lsTo := lsFrom + 1
-	rs := fmt.Sprintf(`(\s+\S+){%d}$`, n)
+	rs := fmt.Sprintf(`(\s*\S+){%d}$`, n)
 	loc := regexp.MustCompile((rs)).FindStringIndex(this.translatedSet[lsFrom])
 	if loc == nil {
 		return
@@ -136,11 +138,12 @@ func (this *SubtitleSRT) MoveWordsFromLineSetToNext(lsFrom, n int) {
 // from the beginning of a line to the end of the previous one.
 // It cannot be used to move words between linesets.
 // Affected lineset is *not* processed with SplitTranslatedLineSetIntoLines.
-// It takes: line number to move from
+// Input: line number to move from
 func (this *SubtitleSRT) MoveWordFromLineToPrev(lineFrom int) {
 	// Verify that lineFrom is the first one of a lineset
 	if this.IsFirstLineOfLineSet(lineFrom) {
-		// if so, do nothing
+		// if so, fallback to MoveWordsFromLinesetToPrev(1)
+		this.MoveWordsFromLineSetToPrev(this.WhatLineSetIsLine(lineFrom), 1)
 		return
 	}
 
@@ -162,11 +165,12 @@ func (this *SubtitleSRT) MoveWordFromLineToPrev(lineFrom int) {
 // from the end of a line to the beginning of the next one.
 // It cannot be used to move words between linesets.
 // Affected lineset is *not* processed with SplitTranslatedLineSetIntoLines.
-// It takes: line number to move from
+// Input: line number to move from
 func (this *SubtitleSRT) MoveWordFromLineToNext(lineFrom int) {
 	// Verify that lineFrom is the last one of a lineset
 	if this.IsLastLineOfLineSet(lineFrom) {
-		// if so, do nothing
+		// if so, fallback to MoveWordsFromLinesetToNext(1)
+		this.MoveWordsFromLineSetToNext(this.WhatLineSetIsLine(lineFrom), 1)
 		return
 	}
 
@@ -193,7 +197,7 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	if ls < 0 || ls >= len(this.lineSet) {
 		return
 	}
-	// Verify that the lineSet has more than one line, and ol is in it
+	// Verify that the lineSet has more than one line, and breakline is in it
 	numLines := this.lineSet[ls].LastLine - this.lineSet[ls].InitLine + 1
 	initLine := this.lineSet[ls].InitLine
 	lastLine := this.lineSet[ls].LastLine
@@ -213,9 +217,30 @@ func (this *SubtitleSRT) SplitLineSetByLine(ls, breakLine int) {
 	// Assign the translatedSet
 	this.translatedSet[ls] = joinStrings(this.translatedLine[initLine:breakLine]...)
 	this.translatedSet[ls+1] = joinStrings(this.translatedLine[breakLine : lastLine+1]...)
-	// Split again the affected lineSets
-	this.splitTranslatedLineSetIntoLines(ls)
-	this.splitTranslatedLineSetIntoLines(ls + 1)
+	// *DO NOT* Split again the affected lineSets
+	// 20210528: SplitLineSet only splits, it does not re-shufle
+	// this.splitTranslatedLineSetIntoLines(ls)
+	// this.splitTranslatedLineSetIntoLines(ls + 1)
+}
+
+// MergeLineSet merges a LineSet with the previous one
+// into a single lineSet
+// Resultant lineset is *not* processed with SplitTranslatedLineSetIntoLines.
+// It takes the lineset to merge.
+func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
+	// Verify that the situation is legal
+	if ls <= 0 || ls > len(this.lineSet)-1 {
+		// (****) raise error
+		return
+	}
+	// Last line of LineSet ls-1 now is the last line of ls
+	this.lineSet[ls-1].LastLine = this.lineSet[ls].LastLine
+	// The translated text of the joint is the joint of the two translated texts
+	this.translatedSet[ls-1] = joinStrings(this.translatedSet[ls-1 : ls+1]...)
+	// Copy all the subsequent linesets to -1
+	this.lineSet = append(this.lineSet[:ls], this.lineSet[ls+1:]...)
+	this.translatedSet = append(this.translatedSet[:ls], this.translatedSet[ls+1:]...)
+	// 20210528: MergeLineSetWithPrev only merges, it does not split
 }
 
 // MergeLineSetWithNext merges a LineSet with the next one
@@ -235,23 +260,5 @@ func (this *SubtitleSRT) MergeLineSetWithNext(ls int) {
 	// Copy all the subsequent linesets to -1
 	this.lineSet = append(this.lineSet[:ls+1], this.lineSet[ls+2:]...)
 	this.translatedSet = append(this.translatedSet[:ls+1], this.translatedSet[ls+2:]...)
-}
-
-// MergeLineSetWithPrev merges a LineSet with the previous one
-// into a single lineSet
-// Resultant lineset is *not* processed with SplitTranslatedLineSetIntoLines.
-// It takes the lineset to merge.
-func (this *SubtitleSRT) MergeLineSetWithPrev(ls int) {
-	// Verify that the situation is legal
-	if ls <= 0 || ls > len(this.lineSet)-1 {
-		// (****) raise error
-		return
-	}
-	// Last line of LineSet ls-1 now is the last line of ls
-	this.lineSet[ls-1].LastLine = this.lineSet[ls].LastLine
-	// The translated text of the joint is the joint of the two translated texts
-	this.translatedSet[ls-1] = joinStrings(this.translatedSet[ls-1 : ls+1]...)
-	// Copy all the subsequent linesets to -1
-	this.lineSet = append(this.lineSet[:ls], this.lineSet[ls+1:]...)
-	this.translatedSet = append(this.translatedSet[:ls], this.translatedSet[ls+1:]...)
+	// 20210528: MergeLineSetWithNext only merges, it does not split
 }

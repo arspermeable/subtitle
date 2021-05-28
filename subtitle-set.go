@@ -42,7 +42,7 @@ func (this *SubtitleSRT) SetTranslatedTextOfLineSet(lineSetNumber int, txt strin
 		return
 	}
 	// Assign the txt to the translatedSet
-	this.translatedSet[lineSetNumber] = txt
+	this.translatedSet[lineSetNumber] = prepareString(txt)
 	// Split the translation of this lineSetNumber into lines
 	this.splitTranslatedLineSetIntoLines(lineSetNumber)
 	// build the translatedText with the new translatedSet

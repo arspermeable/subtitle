@@ -6,6 +6,20 @@ import "strings"
 // Informative functions about the SubtitleSRT
 // --------------------------------------------
 
+// WhatLineSetIsLine(ln) returns the LineSet id in which the line ln sits
+func (this *SubtitleSRT) WhatLineSetIsLine(ln int) int {
+	// if ln<0 or ln>=totallines then return -1
+	if ln < 0 || ln >= this.CountLines() {
+		return -1
+	}
+	for i, ls := range this.lineSet {
+		if ln <= ls.LastLine {
+			return i
+		}
+	}
+	return -1
+}
+
 // Return the ratio translatedChars/originalChars
 func (this *SubtitleSRT) CalculateRatioOfLineSet(theLineSet int) float64 {
 	var ratio float64
